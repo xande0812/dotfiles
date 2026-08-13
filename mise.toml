@@ -5,6 +5,7 @@ dotfiles.default_mode = "symlink"
 [dotfiles]
 "~/.zshrc" = {}
 "~/.zprofile" = {}
+"~/.config/zsh" = {}
 "~/.config/mise" = {}
 "~/.config/starship.toml" = {}
 "~/.ssh/config" = {}
@@ -13,6 +14,7 @@ dotfiles.default_mode = "symlink"
 
 [bootstrap.packages]
 "brew:git" = "latest"
+"brew:eza" = "latest"
 "brew-cask:1password" = "latest"
 "brew-cask:google-chrome" = "latest"
 "brew-cask:slack" = "latest"
