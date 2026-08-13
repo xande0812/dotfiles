@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+#
+# home-audit — 聖域の外で最近更新されたファイルを可視化する
+#
+# 使い方:
+#   home-audit          直近7日
+#   home-audit 30       直近30日
+#   home-audit 7 -v     ファイルパスを個別に表示
+#
+set -uo pipefail
+
+DAYS="${1:-7}"
+VERBOSE="${2:-}"
+
+# 判定済みの除外パス。
+# 新しいエントリを足すときは、なぜ除外して良いかをコメントに残すこと。
+EXCLUDES=(
+  "$HOME/vault"                  # 聖域そのもの
+  "$HOME/src"                    # ghq 管理下。ghq get で再取得できる
+  "$HOME/Library"                # アプリ設定。再現可能側に倒す判断
+  "$HOME/.Trash"
+  "$HOME/.cache"                 # XDG_CACHE_HOME
+  "$HOME/.local/share/mise"      # mise が管理するツール本体
+  "$HOME/.local/state"           # XDG_STATE_HOME
+  "$HOME/.npm"
+  "$HOME/.bun"
+  "$HOME/.docker"
+)
+
+# ディレクトリ名で除外するもの（どこにあっても対象外）
+PRUNE_NAMES=(
+  node_modules
+  .git
+  .venv
+  target
+  dist
+  build
+  .next
+)
+
+FIND_ARGS=()
+for p in "${EXCLUDES[@]}"; do
+  FIND_ARGS+=(-path "$p" -prune -o)
+done
+for n in "${PRUNE_NAMES[@]}"; do
+  FIND_ARGS+=(-name "$n" -prune -o)
+done
+
+results=$(
+  find "$HOME" "${FIND_ARGS[@]}" \
+    -type f -mtime "-${DAYS}" \
+    ! -name '.DS_Store' \
+    -print 2>/dev/null
+)
+
+if [ -z "$results" ]; then
+  echo "clean: no files modified outside the vault in the last ${DAYS} days."
+  exit 0
+fi
+
+count=$(printf '%s\n' "$results" | wc -l | tr -d ' ')
+echo "${count} file(s) modified outside the vault in the last ${DAYS} days:"
+echo
+
+if [ "$VERBOSE" = "-v" ]; then
+  printf '%s\n' "$results" | sed "s|^$HOME/|~/|" | sort
+else
+  printf '%s\n' "$results" \
+    | sed "s|^$HOME/||" \
+    | awk -F/ '{ if (NF>2) print $1"/"$2; else if (NF>1) print $1; else print "(home)" }' \
+    | sort | uniq -c | sort -rn
+fi
+
+echo
+echo "For each entry, decide one of:"
+echo "  - move it into ~/vault (it matters)"
+echo "  - add it to EXCLUDES in this script (it is disposable or reproducible)"

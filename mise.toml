@@ -11,6 +11,7 @@ dotfiles.default_mode = "symlink"
 "~/.ssh/config" = {}
 "~/.gitconfig" = {}
 "~/.local/bin/ssh-sign" = { mode = "copy", mode_bits = "0755" }
+"~/.local/bin/home-audit" = { mode = "copy", mode_bits = "0755" }
 
 [bootstrap.packages]
 "brew:git" = "latest"
