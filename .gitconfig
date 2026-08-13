@@ -1,0 +1,19 @@
+[user]
+    name = xande0812
+    email = xande0812@users.noreply.github.com
+    signingkey = ~/.ssh/id_git_sign
+
+[gpg]
+    format = ssh
+
+[gpg "ssh"]
+    program = ~/.local/bin/ssh-sign
+
+[commit]
+    gpgsign = true
+
+[tag]
+    gpgSign = true
+
+[url "git@github.com:"]
+    insteadOf = https://github.com/

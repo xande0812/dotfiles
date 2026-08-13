@@ -1,0 +1,58 @@
+[settings]
+dotfiles.root = "~/vault/dotfiles"
+dotfiles.default_mode = "symlink"
+
+[dotfiles]
+"~/.zshrc" = {}
+"~/.zprofile" = {}
+"~/.config/mise" = {}
+"~/.config/starship.toml" = {}
+"~/.ssh/config" = {}
+"~/.gitconfig" = {}
+"~/.local/bin/ssh-sign" = { mode = "copy", mode_bits = "0755" }
+
+[bootstrap.packages]
+"brew:git" = "latest"
+"brew-cask:1password" = "latest"
+"brew-cask:google-chrome" = "latest"
+"brew-cask:slack" = "latest"
+"brew-cask:google-japanese-ime" = "latest"
+"brew-cask:raycast" = "latest"
+"brew-cask:claude-code" = "latest"
+"brew-cask:font-moralerspace" = "latest"
+
+[tasks.aerospace]
+description = "Install AeroSpace via Homebrew CLI"
+run = "brew list --cask aerospace &>/dev/null || brew install --cask nikitabobko/tap/aerospace"
+
+[tasks.sbx]
+description = "Install Docker Sandboxes via Homebrew CLI"
+run = """
+brew list --formula sbx &>/dev/null || {
+  brew trust --formula docker/tap/sbx
+  brew install docker/tap/sbx
+}
+"""
+
+[tasks.brew-extras]
+description = "Install packages that require the Homebrew CLI"
+depends = ["aerospace", "sbx"]
+
+[tasks.git-signing-key]
+description = "Generate a Secure Enclave signing key for git"
+run = """
+set -euo pipefail
+if [ -f ~/.ssh/id_git_sign ]; then
+  echo "already exists: ~/.ssh/id_git_sign"
+  exit 0
+fi
+sc_auth create-ctk-identity -l git-sign -k p-256-ne -t none
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+cd "$tmp"
+ssh-keygen -w /usr/lib/ssh-keychain.dylib -K -N ""
+mkdir -p ~/.ssh
+mv id_ecdsa_sk_rk ~/.ssh/id_git_sign
+mv id_ecdsa_sk_rk.pub ~/.ssh/id_git_sign.pub
+echo "--- register this at https://github.com/settings/keys as a Signing key ---"
+cat ~/.ssh/id_git_sign.pub
+"""
