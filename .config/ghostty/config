@@ -1,0 +1,14 @@
+theme = Monokai Pro Spectrum
+window-padding-x = 20
+window-padding-y = 5
+window-padding-balance = true
+window-theme = ghostty
+background-opacity = 0.8
+background-blur-radius = 20
+macos-titlebar-style = transparent
+macos-non-native-fullscreen = true
+keybind = "global:ctrl+cmd+`=toggle_quick_terminal"
+quick-terminal-animation-duration = 0
+keybind = shift+enter=text:\n
+font-feature = -dlig
+font-family = Moralerspace Xenon

@@ -11,6 +11,7 @@ dotfiles.default_mode = "symlink"
 "~/.ssh/config" = {}
 "~/.gitconfig" = {}
 "~/.config/pnpm" = {}
+"~/.config/ghostty" = {}
 "~/.claude/CLAUDE.md" = {}
 "~/.githooks" = {}
 "~/.local/bin/ssh-sign" = { mode = "copy", mode_bits = "0755" }
@@ -26,6 +27,7 @@ dotfiles.default_mode = "symlink"
 "brew-cask:raycast" = "latest"
 "brew-cask:claude-code" = "latest"
 "brew-cask:font-moralerspace" = "latest"
+"brew-cask:ghostty" = "latest"
 
 [tasks.aerospace]
 description = "Install AeroSpace via Homebrew CLI"
