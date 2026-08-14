@@ -5,17 +5,39 @@ set -euo pipefail
 SECRETLINTRC="$HOME/vault/dotfiles/.secretlintrc.json"
 SECRETLINT_VERSION="13.0.4"
 
-# --- pnpm の解決 ---------------------------------------------------------
-# GUI の git クライアントから呼ばれると PATH が最小限になるため明示的に探す
+# --- mise / pnpm / node の解決 --------------------------------------------
+# git hook は非対話シェルとして起動されるため .zshrc / .zprofile の
+# `mise activate` が効かず、GUI の git クライアントから呼ばれる場合を含め
+# PATH が最小限になる。mise 経由のフルパスを明示的に解決する
+if command -v mise >/dev/null 2>&1; then
+  MISE=$(command -v mise)
+elif [ -x "$HOME/.local/bin/mise" ]; then
+  MISE="$HOME/.local/bin/mise"
+else
+  MISE=""
+fi
+
+PNPM=""
 if command -v pnpm >/dev/null 2>&1; then
   PNPM=$(command -v pnpm)
-elif command -v mise >/dev/null 2>&1 && mise which pnpm >/dev/null 2>&1; then
-  PNPM=$(mise which pnpm)
-elif [ -x "$HOME/.local/bin/mise" ] && "$HOME/.local/bin/mise" which pnpm >/dev/null 2>&1; then
-  PNPM=$("$HOME/.local/bin/mise" which pnpm)
-else
+elif [ -n "$MISE" ]; then
+  PNPM=$("$MISE" which pnpm 2>/dev/null || true)
+fi
+if [ -z "$PNPM" ]; then
   echo "pre-push: pnpm が見つかりません。検査できないため push を中止します。" >&2
   exit 1
+fi
+
+# pnpm dlx が起動する secretlint 本体は素の node ランタイムを要求するため、
+# PATH 上に node が無ければ mise 管理下の node のディレクトリを足す
+if ! command -v node >/dev/null 2>&1; then
+  if [ -n "$MISE" ] && node_bin=$("$MISE" which node 2>/dev/null); then
+    PATH="$(dirname "$node_bin"):$PATH"
+    export PATH
+  else
+    echo "pre-push: node が見つかりません。検査できないため push を中止します。" >&2
+    exit 1
+  fi
 fi
 
 run_secretlint() {
