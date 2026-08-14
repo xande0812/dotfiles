@@ -10,6 +10,7 @@ dotfiles.default_mode = "symlink"
 "~/.config/starship.toml" = {}
 "~/.ssh/config" = {}
 "~/.gitconfig" = {}
+"~/.bunfig.toml" = {}
 "~/.config/pnpm" = {}
 "~/.config/ghostty" = {}
 "~/.aerospace.toml" = {}
