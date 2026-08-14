@@ -4,6 +4,8 @@ set -euo pipefail
 
 SECRETLINT_IMAGE="secretlint/secretlint:v13.0.4"
 
+echo "pre-push: secretlint による秘密情報検査を開始します..." >&2
+
 if ! command -v docker >/dev/null 2>&1; then
   echo "pre-push: docker が見つかりません。検査できないため push を中止します。" >&2
   exit 1
@@ -52,7 +54,10 @@ while read -r local_ref local_oid remote_ref remote_oid; do
   done < <(git diff --name-only --diff-filter=ACMR -z "$base" "$local_oid")
 done
 
-[ "$found" -eq 0 ] && exit 0
+if [ "$found" -eq 0 ]; then
+  echo "pre-push: 検査対象のファイルがないためスキップします。" >&2
+  exit 0
+fi
 
 # --- 検査 ------------------------------------------------------------------
 # secretlint/secretlint イメージは preset-recommend 等をビルトインしており、
@@ -68,3 +73,5 @@ pre-push: 秘密情報の可能性がある内容を検出したため push を�
 EOF
   exit 1
 fi
+
+echo "pre-push: secretlint 検査OK。push を続行します。" >&2
