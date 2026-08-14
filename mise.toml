@@ -12,6 +12,8 @@ dotfiles.default_mode = "symlink"
 "~/.gitconfig" = {}
 "~/.config/pnpm" = {}
 "~/.claude/CLAUDE.md" = {}
+"~/.githooks" = {}
+"~/.secretlintrc.json" = {}
 "~/.local/bin/ssh-sign" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/home-audit" = { mode = "copy", mode_bits = "0755" }
 

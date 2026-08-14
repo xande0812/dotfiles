@@ -3,6 +3,9 @@
     email = xande0812@users.noreply.github.com
     signingkey = ~/.ssh/id_git_sign
 
+[core]
+    hooksPath = ~/.githooks
+
 [gpg]
     format = ssh
 
