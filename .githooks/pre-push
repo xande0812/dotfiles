@@ -1,51 +1,11 @@
 #!/usr/bin/env bash
-# pre-push: push されるコミットに含まれる秘密情報を secretlint で検査する
+# pre-push: push されるコミットに含まれる秘密情報を secretlint (Docker公式イメージ) で検査する
 set -euo pipefail
 
-SECRETLINTRC="$HOME/vault/dotfiles/.secretlintrc.json"
-SECRETLINT_VERSION="13.0.4"
-
-# --- mise / pnpm / node の解決 --------------------------------------------
-# git hook は非対話シェルとして起動されるため .zshrc / .zprofile の
-# `mise activate` が効かず、GUI の git クライアントから呼ばれる場合を含め
-# PATH が最小限になる。mise 経由のフルパスを明示的に解決する
-if command -v mise >/dev/null 2>&1; then
-  MISE=$(command -v mise)
-elif [ -x "$HOME/.local/bin/mise" ]; then
-  MISE="$HOME/.local/bin/mise"
-else
-  MISE=""
-fi
-
-PNPM=""
-if command -v pnpm >/dev/null 2>&1; then
-  PNPM=$(command -v pnpm)
-elif [ -n "$MISE" ]; then
-  PNPM=$("$MISE" which pnpm 2>/dev/null || true)
-fi
-if [ -z "$PNPM" ]; then
-  echo "pre-push: pnpm が見つかりません。検査できないため push を中止します。" >&2
+if ! command -v docker >/dev/null 2>&1; then
+  echo "pre-push: docker が見つかりません。検査できないため push を中止します。" >&2
   exit 1
 fi
-
-# pnpm dlx が起動する secretlint 本体は素の node ランタイムを要求するため、
-# PATH 上に node が無ければ mise 管理下の node のディレクトリを足す
-if ! command -v node >/dev/null 2>&1; then
-  if [ -n "$MISE" ] && node_bin=$("$MISE" which node 2>/dev/null); then
-    PATH="$(dirname "$node_bin"):$PATH"
-    export PATH
-  else
-    echo "pre-push: node が見つかりません。検査できないため push を中止します。" >&2
-    exit 1
-  fi
-fi
-
-run_secretlint() {
-  "$PNPM" dlx \
-    --package "secretlint@${SECRETLINT_VERSION}" \
-    --package "@secretlint/secretlint-rule-preset-recommend@${SECRETLINT_VERSION}" \
-    secretlint "$@"
-}
 
 # --- 準備 ----------------------------------------------------------------
 remote_name="${1:-origin}"
@@ -92,20 +52,17 @@ done
 
 [ "$found" -eq 0 ] && exit 0
 
-# --- 検査 ----------------------------------------------------------------
-if [ ! -f "$SECRETLINTRC" ]; then
-  echo "pre-push: $SECRETLINTRC が見つかりません。" >&2
-  exit 1
-fi
-cp "$SECRETLINTRC" "$tmp/.secretlintrc.json"
-
-cd "$tmp"
-if ! run_secretlint --secretlintrc "$tmp/.secretlintrc.json" "$tmp/**/*"; then
+# --- 検査 ------------------------------------------------------------------
+# secretlint/secretlint イメージは preset-recommend 等をビルトインしており、
+# 設定ファイル無しで動く設計 (https://github.com/secretlint/secretlint)
+if ! docker run --rm \
+  --mount type=bind,source="$tmp",target="$tmp" \
+  --workdir "$tmp" \
+  secretlint/secretlint secretlint '**/*'; then
   cat >&2 <<'EOF'
 
 pre-push: 秘密情報の可能性がある内容を検出したため push を中止しました。
 検出箇所の先頭はブランチ名のディレクトリです。実際のパスはその下の部分に対応します。
-誤検出の場合は .secretlintrc.json の allowMessageIds かインラインコメントで抑制してください。
 EOF
   exit 1
 fi
