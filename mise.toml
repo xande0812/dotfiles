@@ -46,6 +46,13 @@ brew list --formula sbx &>/dev/null || {
 description = "Install packages that require the Homebrew CLI"
 depends = ["aerospace", "sbx"]
 
+[tasks.macos-keyrepeat]
+description = "Set macOS key repeat rate"
+run = """
+defaults write NSGlobalDomain KeyRepeat -int 2
+defaults write NSGlobalDomain InitialKeyRepeat -int 15
+"""
+
 [tasks.git-signing-key]
 description = "Generate a Secure Enclave signing key for git"
 run = """
