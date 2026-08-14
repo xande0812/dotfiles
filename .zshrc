@@ -6,5 +6,5 @@ source ~/.config/zsh/ghq-fzf.zsh
 alias lg='lazygit'
 alias ls='eza'
 alias la='eza -a'
-alias ll='eza -l --git'
+alias ll='eza -la --git'
 alias lt='eza --tree --level=2'
