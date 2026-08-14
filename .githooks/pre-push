@@ -42,8 +42,8 @@ fi
 
 run_secretlint() {
   "$PNPM" dlx \
-    -p "secretlint@${SECRETLINT_VERSION}" \
-    -p "@secretlint/secretlint-rule-preset-recommend@${SECRETLINT_VERSION}" \
+    --package "secretlint@${SECRETLINT_VERSION}" \
+    --package "@secretlint/secretlint-rule-preset-recommend@${SECRETLINT_VERSION}" \
     secretlint "$@"
 }
 
