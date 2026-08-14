@@ -16,6 +16,15 @@
     - nextjsをインストールする場合
       - 誤: `pnpm create next-app@latest my-app --yes`
       - 正: nextjsが必要なのでインストールをしてください
+- **Node.js のパッケージマネージャは pnpm に統一する**: npm の使用を禁止する
+  - 対象は Node.js/JavaScript のパッケージ管理のみ。Go（`go get` / `go mod`）や Rust（`cargo`）など他言語のエコシステムには適用しない
+  - 例:
+    - 依存関係を追加する場合
+      - 誤: `npm install <package>`
+      - 正: `pnpm add <package>`
+    - パッケージを一時実行する場合
+      - 誤: `npx <package>`
+      - 正: `pnpm dlx <package>`
 - **YAGNI原則の厳守**: 将来的に使うであろうという推測から無駄な機能や処理、テストケースを作成することを禁止する
   - 現在の要件に対してのみ必要最小限の実装を行う
   - 「後で使うかもしれない」拡張ポイントや抽象化を避ける
