@@ -2,6 +2,8 @@
 # pre-push: push されるコミットに含まれる秘密情報を secretlint (Docker公式イメージ) で検査する
 set -euo pipefail
 
+SECRETLINT_IMAGE="secretlint/secretlint:v13.0.4"
+
 if ! command -v docker >/dev/null 2>&1; then
   echo "pre-push: docker が見つかりません。検査できないため push を中止します。" >&2
   exit 1
@@ -58,7 +60,7 @@ done
 if ! docker run --rm \
   --mount type=bind,source="$tmp",target="$tmp" \
   --workdir "$tmp" \
-  secretlint/secretlint secretlint '**/*'; then
+  "$SECRETLINT_IMAGE" secretlint '**/*'; then
   cat >&2 <<'EOF'
 
 pre-push: 秘密情報の可能性がある内容を検出したため push を中止しました。
