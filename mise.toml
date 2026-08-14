@@ -12,10 +12,12 @@ dotfiles.default_mode = "symlink"
 "~/.gitconfig" = {}
 "~/.config/pnpm" = {}
 "~/.config/ghostty" = {}
+"~/.aerospace.toml" = {}
 "~/.claude/CLAUDE.md" = {}
 "~/.githooks" = {}
 "~/.local/bin/ssh-sign" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/home-audit" = { mode = "copy", mode_bits = "0755" }
+"~/.config/borders/bordersrc" = { mode = "copy", mode_bits = "0755" }
 
 [bootstrap.packages]
 "brew:git" = "latest"
@@ -42,9 +44,18 @@ brew list --formula sbx &>/dev/null || {
 }
 """
 
+[tasks.borders]
+description = "Install JankyBorders via Homebrew CLI"
+run = """
+brew list --formula borders &>/dev/null || {
+  brew trust --formula FelixKratz/formulae/borders
+  brew install FelixKratz/formulae/borders
+}
+"""
+
 [tasks.brew-extras]
 description = "Install packages that require the Homebrew CLI"
-depends = ["aerospace", "sbx"]
+depends = ["aerospace", "sbx", "borders"]
 
 [tasks.macos-keyrepeat]
 description = "Set macOS key repeat rate"
