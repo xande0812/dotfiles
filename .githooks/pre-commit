@@ -1,7 +1,0 @@
-#!/bin/sh
-set -eu
-
-staged=$(git diff --cached --name-only --diff-filter=ACM)
-[ -z "$staged" ] && exit 0
-
-echo "$staged" | xargs pnpm dlx --package secretlint --package @secretlint/secretlint-rule-preset-recommend secretlint --secretlintrc "$HOME/.secretlintrc.json" --
