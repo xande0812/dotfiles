@@ -23,3 +23,6 @@
 
 [ghq]
     root = ~/src
+
+[alias]
+    ph = push origin HEAD
