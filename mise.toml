@@ -10,6 +10,7 @@ dotfiles.default_mode = "symlink"
 "~/.config/starship.toml" = {}
 "~/.ssh/config" = {}
 "~/.gitconfig" = {}
+"~/.claude/CLAUDE.md" = {}
 "~/.local/bin/ssh-sign" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/home-audit" = { mode = "copy", mode_bits = "0755" }
 
