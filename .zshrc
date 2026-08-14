@@ -1,5 +1,6 @@
 eval "$(mise activate zsh)"
 eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
 
 source ~/.config/zsh/ghq-fzf.zsh
 
