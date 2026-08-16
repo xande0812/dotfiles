@@ -25,6 +25,15 @@
     - パッケージを一時実行する場合
       - 誤: `npx <package>`
       - 正: `pnpm dlx <package>`
+- 実装後は必ずCodexにレビューを依頼してください
+  - Herdrを利用しているため、herdrで別ペインを立ち上げてCodexにレビューを依頼すること（詳細な手順はherdrスキルを参照）
+    1. `herdr pane split --current --direction right --cwd "$PWD" --no-focus` でレビュー用ペインを作成（縦長ペインなら `--direction down`）
+    2. `herdr agent start reviewer --kind codex --pane <作成したpane-id> -- --model gpt-5.6-sol` でCodexを起動（モデルは必ずgpt-5.6-solを使うこと）
+    3. `herdr agent prompt reviewer "<レビュー依頼文>" --wait --timeout 600000` でレビューを依頼し、`herdr agent read reviewer --source recent-unwrapped` で結果を読む
+  - レビューの指摘は鵜呑みにせず、妥当性を自分で判断してください
+  - レビューの指摘が妥当だと判断したら修正をしてください
+  - レビューの指摘の妥当性が判断できない場合はユーザーに聞いてください
+  - 修正事項がなくなるまでレビュー→修正→レビュー…のサイクルを回してください
 - **YAGNI原則の厳守**: 将来的に使うであろうという推測から無駄な機能や処理、テストケースを作成することを禁止する
   - 現在の要件に対してのみ必要最小限の実装を行う
   - 「後で使うかもしれない」拡張ポイントや抽象化を避ける
