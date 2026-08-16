@@ -65,6 +65,26 @@ defaults write NSGlobalDomain KeyRepeat -int 2
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
 """
 
+[tasks.macos-trackpad]
+description = "Set macOS trackpad behavior (tap to click, two-finger secondary click, three-finger drag)"
+run = """
+for domain in com.apple.AppleMultitouchTrackpad com.apple.driver.AppleBluetoothMultitouch.trackpad; do
+  defaults write "$domain" Clicking -bool true
+  defaults write "$domain" TrackpadRightClick -bool true
+  defaults write "$domain" TrackpadCornerSecondaryClick -int 0
+  defaults write "$domain" TrackpadThreeFingerDrag -bool true
+done
+
+defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+defaults -currentHost write NSGlobalDomain com.apple.trackpad.enableSecondaryClick -bool true
+defaults -currentHost write NSGlobalDomain com.apple.trackpad.trackpadCornerClickBehavior -int 0
+"""
+
+[tasks.macos-defaults]
+description = "Apply all macOS defaults settings (key repeat, trackpad)"
+depends = ["macos-keyrepeat", "macos-trackpad"]
+
 [tasks.git-signing-key]
 description = "Generate a Secure Enclave signing key for git"
 run = """
