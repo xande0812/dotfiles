@@ -4,6 +4,7 @@ eval "$(zoxide init zsh --cmd cd)"
 
 source ~/.config/zsh/ghq-fzf.zsh
 source ~/.config/zsh/dotenvx.zsh
+source ~/.config/zsh/aws.zsh
 
 alias lg='lazygit'
 alias ls='eza'
