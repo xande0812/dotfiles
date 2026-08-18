@@ -19,3 +19,4 @@ codex = "0.147.0"
 apm = "0.28.0"
 dotenvx = "2.20.1"
 "pipx:harlequin" = { version = "2.9.0", extras = ["postgres", "mysql"] }
+"pipx:pgcli" = "4.5.0"
