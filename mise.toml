@@ -35,7 +35,6 @@ dotfiles.default_mode = "symlink"
 "brew-cask:slack" = "latest"
 "brew-cask:google-japanese-ime" = "latest"
 "brew-cask:raycast" = "latest"
-"brew-cask:claude-code" = "latest"
 "brew-cask:font-moralerspace" = "latest"
 "brew-cask:ghostty" = "latest"
 
