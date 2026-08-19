@@ -1,7 +1,7 @@
 eval "$(mise activate zsh)"
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh --cmd cd)"
-eval "$(atuin init zsh)"
+eval "$(atuin init zsh --disable-up-arrow)"
 
 source ~/.config/zsh/ghq-fzf.zsh
 source ~/.config/zsh/dotenvx.zsh
