@@ -61,9 +61,18 @@ brew list --formula borders &>/dev/null || {
 }
 """
 
+[tasks.ecsk]
+description = "Install ecsk via Homebrew CLI"
+run = """
+brew list --formula ecsk &>/dev/null || {
+  brew trust --formula yukiarrr/tap/ecsk
+  brew install yukiarrr/tap/ecsk
+}
+"""
+
 [tasks.brew-extras]
 description = "Install packages that require the Homebrew CLI"
-depends = ["aerospace", "sbx", "borders"]
+depends = ["aerospace", "sbx", "borders", "ecsk"]
 
 [tasks.macos-keyrepeat]
 description = "Set macOS key repeat rate"
