@@ -38,6 +38,7 @@ dotfiles.default_mode = "symlink"
 "brew-cask:raycast" = "latest"
 "brew-cask:font-moralerspace" = "latest"
 "brew-cask:ghostty" = "latest"
+"brew-cask:obsidian" = "latest"
 
 [tasks.aerospace]
 description = "Install AeroSpace via Homebrew CLI"
