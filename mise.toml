@@ -8,6 +8,7 @@ dotfiles.default_mode = "symlink"
 "~/.config/zsh" = {}
 "~/.config/mise" = {}
 "~/.config/starship.toml" = {}
+"~/.config/atuin/config.toml" = {}
 "~/.ssh/config" = {}
 "~/.gitconfig" = {}
 "~/.bunfig.toml" = {}
