@@ -1,0 +1,37 @@
+#!/usr/bin/env zsh
+#
+# Fargate の踏み台タスク(ECS Exec 有効)経由で Aurora への TCP トンネルを張る。
+# アカウント ID / クラスタ名 / エンドポイントはこのリポジトリが public のため引数で渡す。
+# 認証は opr 経由で注入される AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_REGION を使う
+# (opr は op run --env-file 経由でサブプロセスに環境変数を渡すため、PATH 上の実行可能ファイル
+# である必要がある。シェル関数のままでは op run から呼び出せない)。
+#
+# 呼び出し例: opr <env-name> -- aurora-tunnel <ecs-cluster> <ecs-service> <db-endpoint> [local-port]
+
+cluster="$1" service="$2" host="$3" local_port="${4:-15432}"
+if [[ -z "$cluster" || -z "$service" || -z "$host" ]]; then
+  print -u2 "usage: opr <env-name> -- aurora-tunnel <ecs-cluster> <ecs-service> <db-endpoint> [local-port]"
+  exit 1
+fi
+
+task_arn="$(aws ecs list-tasks --cluster "$cluster" \
+  --service-name "$service" --desired-status RUNNING \
+  --query 'taskArns[0]' --output text)" || exit
+if [[ -z "$task_arn" || "$task_arn" == "None" ]]; then
+  print -u2 "aurora-tunnel: RUNNING なタスクが ${cluster}/${service} に見つかりません"
+  exit 1
+fi
+
+task_id="${task_arn##*/}"
+runtime_id="$(aws ecs describe-tasks --cluster "$cluster" \
+  --tasks "$task_arn" --query 'tasks[0].containers[0].runtimeId' --output text)" || exit
+if [[ -z "$runtime_id" || "$runtime_id" == "None" ]]; then
+  print -u2 "aurora-tunnel: runtimeId が取れません (ECS Exec が有効か確認してください)"
+  exit 1
+fi
+
+print -u2 "aurora-tunnel: ${host}:5432 -> localhost:${local_port} (task ${task_id})"
+exec aws ssm start-session \
+  --target "ecs:${cluster}_${task_id}_${runtime_id}" \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters "{\"host\":[\"${host}\"],\"portNumber\":[\"5432\"],\"localPortNumber\":[\"${local_port}\"]}"
