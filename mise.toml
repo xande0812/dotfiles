@@ -71,9 +71,13 @@ brew list --formula ecsk &>/dev/null || {
 }
 """
 
+[tasks.screendrop]
+description = "Install Screendrop via Homebrew CLI"
+run = "brew list --cask screendrop &>/dev/null || brew install --cask fayazara/tap/screendrop"
+
 [tasks.brew-extras]
 description = "Install packages that require the Homebrew CLI"
-depends = ["aerospace", "sbx", "borders", "ecsk"]
+depends = ["aerospace", "sbx", "borders", "ecsk", "screendrop"]
 
 [tasks.macos-keyrepeat]
 description = "Set macOS key repeat rate"
