@@ -12,6 +12,7 @@ dotfiles.default_mode = "symlink"
 "~/.ssh/config" = {}
 "~/.gitconfig" = {}
 "~/.bunfig.toml" = {}
+"~/.srt-settings.json" = {}
 "~/.config/pnpm" = {}
 "~/.config/ghostty" = {}
 "~/.aerospace.toml" = {}

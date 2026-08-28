@@ -1,0 +1,57 @@
+{
+  "network": {
+    "allowedDomains": [],
+    "deniedDomains": [],
+    "allowUnixSockets": [],
+    "allowAllUnixSockets": false,
+    "allowLocalBinding": false
+  },
+  "filesystem": {
+    "denyRead": [
+      "~",
+      "~/.ssh",
+      "~/.aws",
+      "~/.docker",
+      "~/.config/gh",
+      "~/.config/op",
+      "~/.netrc",
+      "~/.npmrc",
+      "~/.local/share/atuin",
+      "~/Library/Keychains",
+      "~/Library/Group Containers/2BUA8C4S2C.com.1password",
+      "~/vault",
+      "**/.env",
+      "**/.env.*"
+    ],
+    "allowRead": [
+      ".",
+      "~/.local/share/mise"
+    ],
+    "allowWrite": [
+      "."
+    ],
+    "denyWrite": [
+      ".git/hooks",
+      ".git/config",
+      "~/vault",
+      "~/.local/bin",
+      "~/Library/LaunchAgents",
+      "~/.srt-settings.json",
+      "~/.zshrc",
+      "~/.zprofile",
+      "~/.zshenv",
+      "~/.gitconfig",
+      "~/.githooks",
+      "~/.ssh",
+      "~/.config",
+      "~/.claude",
+      "~/.codex",
+      "~/.profile",
+      "~/.bash_profile",
+      "~/.bashrc"
+    ]
+  },
+  "enableWeakerNestedSandbox": false,
+  "enableWeakerNetworkIsolation": false,
+  "allowAppleEvents": false
+}
