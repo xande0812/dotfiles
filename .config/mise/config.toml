@@ -24,3 +24,4 @@ fd = "10.4.2"
 rg = "15.2.0"
 "pipx:harlequin" = { version = "2.9.0", extras = ["postgres", "mysql"] }
 "pipx:pgcli" = "4.5.0"
+node = "26.7.0"

@@ -14,3 +14,11 @@ alias la='eza -a'
 alias ll='eza -la --git'
 alias lt='eza --tree --level=2'
 alias dx='dotenvx run --'
+
+# pnpm
+export PNPM_HOME="$HOME/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end
