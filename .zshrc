@@ -22,3 +22,6 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
 # pnpm end
+
+# pi-coding-agent (xande0812/agent, ghq管理)
+export PATH="$(ghq root)/github.com/xande0812/agent/pi-coding-agent/bin:$PATH"
