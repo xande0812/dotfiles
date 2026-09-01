@@ -1,0 +1,21 @@
+#!/usr/bin/env zsh
+#
+# Fargate の踏み台タスク(ECS Exec 有効)経由で pg_dump を実行し、コンテナ内にダンプファイルを作る。
+# 認証は opr 経由で注入される AWS 認証情報を使う(ecsk が ECS Exec セッションを張り、タスク/コンテナは
+# 対話的に選択する)。DB パスワードは pg_dump 実行時に対話的にプロンプトから入力する。
+#
+# 呼び出し例: opr <env-name> -- pgdump-bastion <ecs-cluster> <db-host> <db-name> <label> [db-user]
+
+cluster="$1" host="$2" db="$3" label="$4" user="${5:-postgres}"
+if [[ -z "$cluster" || -z "$host" || -z "$db" || -z "$label" ]]; then
+  print -u2 "usage: opr <env-name> -- pgdump-bastion <ecs-cluster> <db-host> <db-name> <label> [db-user]"
+  exit 1
+fi
+if [[ ! "$label" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  print -u2 "pgdump-bastion: label は英数字・.・_・- のみ使用できます: ${label}"
+  exit 1
+fi
+
+filename="$(date +%Y%m%d)_${label}.dump"
+print -u2 "pgdump-bastion: dumping ${db}@${host} -> ${filename} (コンテナ内)"
+exec ecsk exec --cluster "$cluster" -i -- pg_dump -Fc -h "$host" -U "$user" -d "$db" -f "$filename"

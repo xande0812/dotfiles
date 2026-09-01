@@ -24,6 +24,7 @@ dotfiles.default_mode = "symlink"
 "~/.local/bin/home-audit" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/statusline-command.sh" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/aurora-tunnel" = { mode = "copy", mode_bits = "0755" }
+"~/.local/bin/pgdump-bastion" = { mode = "copy", mode_bits = "0755" }
 "~/.config/borders/bordersrc" = { mode = "copy", mode_bits = "0755" }
 
 [bootstrap.packages]
