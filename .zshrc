@@ -14,6 +14,8 @@ alias la='eza -a'
 alias ll='eza -la --git'
 alias lt='eza --tree --level=2'
 alias dx='dotenvx run --'
+alias d='docker'
+alias dc='docker compose'
 
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
