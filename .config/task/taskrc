@@ -1,0 +1,17 @@
+# Taskwarrior — Backlog / GitHub のタスクを集約する台帳
+# 取り込みは task-sync、通知は task-alert(いずれも ~/.local/bin)。
+
+# データは vault に置く(バックアップ対象は vault のみ)
+data.location=~/vault/task
+
+# task-sync が書く UDA。同期されたタスクは取得元が正で、ここでの編集は次回同期で上書きされる
+uda.source.type=string
+uda.source.label=Source
+uda.source.values=backlog,github
+uda.external_id.type=string
+uda.external_id.label=ID
+uda.url.type=string
+uda.url.label=URL
+
+# 自動実行時に対話プロンプトで止まらないようにする
+recurrence.confirmation=no

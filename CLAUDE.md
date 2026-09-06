@@ -57,3 +57,12 @@ SSH/git署名周りの設定を触るときは、これらを混同しないこ�
 `EXCLUDES`/`PRUNE_NAMES` を触る前（除外エントリには必ず理由コメントを付けること）や bash の機能を
 使う前（macOS 標準の bash 3.2 が対象のため `mapfile`/`readarray` は不可）に読むこと。
 
+### task-sync
+
+Backlog と GitHub の自分宛てタスクを Taskwarrior（データは `~/vault/task/`）に集約する仕組み。
+`.local/bin/task-sync`（bun/TypeScript、取り込み）、`.local/bin/task-alert`（zsh、期限通知）、
+`.config/task/taskrc`、`Library/LaunchAgents/dev.xande.task-sync.plist`（30 分ごと）で構成される。
+設計、Taskwarrior 上の属性の対応、既知の制約は `task-sync.md` に記載されている。
+スクリプトの `SourceTask`/`ImportRecord` 型がコントラクトで、UDA を増減するときは taskrc と両方を変えること。
+同期対象の Backlog スペース一覧は案件固有なのでリポジトリには置かず `~/vault/task/sync.json` に書く。
+

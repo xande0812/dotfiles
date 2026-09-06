@@ -1,6 +1,7 @@
 [settings]
 minimum_release_age = "7d"
 pipx.uvx = true
+npm.package_manager = "pnpm"
 
 [tools]
 uv = "0.12.3"
@@ -27,3 +28,4 @@ rg = "15.2.0"
 "pipx:httpie" = "3.2.4"
 node = "26.7.0"
 duckdb = "1.5.5"
+"npm:@nulab/bee" = "1.1.1"

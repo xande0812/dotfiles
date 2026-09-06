@@ -1,0 +1,36 @@
+#!/usr/bin/env zsh
+#
+# task-alert — 期限切れ・期限間近の Taskwarrior タスクを macOS 通知に出す
+#
+# 使い方:
+#   task-alert        期限切れ + 3 日以内
+#   task-alert 7      期限切れ + 7 日以内
+#
+# 「N 日以内」は暦日で数える。due は期限日の 23:59:59 なので、N 日後の分まで含めるには翌日起点で N 日後の 00:00 より前を見る。
+# 何も該当しなければ通知しない。終了コードは常に 0(人間向けの通知であり、失敗扱いにする理由が無い)。
+
+set -uo pipefail
+
+days="${1:-3}"
+
+tw() { task rc.verbose=nothing rc.color=off rc.confirmation=off rc.json.array=1 "$@"; }
+
+# due は UTC の YYYYMMDDTHHMMSSZ なので、表示はローカル日付に直す
+overdue=$(tw status:pending +OVERDUE export | jq -r '.[] | "期限切れ \(.description)"')
+soon=$(tw status:pending -OVERDUE "due.before:tomorrow+${days}d" export \
+  | jq -r '.[] | "\(.due | strptime("%Y%m%dT%H%M%SZ") | mktime | strflocaltime("%m/%d")) \(.description)"')
+
+body=$(printf '%s\n%s\n' "$overdue" "$soon" | sed '/^$/d')
+[[ -z "$body" ]] && exit 0
+
+total=$(print -r -- "$body" | wc -l | tr -d ' ')
+# 通知に収まる行数に切り詰める
+shown=$(print -r -- "$body" | head -n 5)
+
+osascript \
+  -e 'on run argv' \
+  -e 'display notification (item 1 of argv) with title (item 2 of argv)' \
+  -e 'end run' \
+  "$shown" "Taskwarrior: ${total} 件" \
+  || print -u2 "task-alert: failed to display notification"
+exit 0

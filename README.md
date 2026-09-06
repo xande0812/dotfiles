@@ -52,6 +52,17 @@ git remote set-url origin git@github.com:xande0812/dotfiles.git
 git fetch
 ```
 
+### 5. タスク集約（任意）
+
+Backlog と GitHub の自分宛てタスクを Taskwarrior に集める。詳細は `task-sync.md`。
+
+```sh
+bee auth login                     # Backlog スペースごとに実行
+mkdir -p ~/vault/task
+echo '{ "backlog": { "spaces": ["example.backlog.com"] } }' > ~/vault/task/sync.json
+mise run task-sync-install         # launchd agent を登録
+```
+
 ## 手作業のチェックリスト
 
 bootstrap で自動化できないもの。上から順に。
@@ -65,6 +76,7 @@ bootstrap で自動化できないもの。上から順に。
 - [ ] Google 日本語入力を入力ソースに追加し、ライブ変換などを設定
 - [ ] ターミナルのフォントを Moralerspace に変更
 - [ ] Raycast の初期設定とホットキー割り当て
+- [ ] Backlog スペースごとに `bee auth login`、`~/vault/task/sync.json` を書き、`mise run task-sync-install`
 
 ## 構成
 
@@ -74,6 +86,7 @@ bootstrap で自動化できないもの。上から順に。
 | AeroSpace / Docker Sandboxes | `[tasks]` から brew CLI 経由（タップが API メタデータ未公開のため） |
 | CLI ツール | `[tools]`（グローバルは `.config/mise/config.toml`） |
 | 設定ファイル | `[dotfiles]` |
+| タスク集約（Taskwarrior + task-sync） | `[dotfiles]` + `[tasks.task-sync-install]`。詳細は `task-sync.md` |
 
 ### 鍵の使い分け
 

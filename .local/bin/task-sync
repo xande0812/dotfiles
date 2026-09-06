@@ -1,0 +1,297 @@
+#!/usr/bin/env bun
+/**
+ * task-sync — Backlog と GitHub の自分宛てタスクを Taskwarrior に取り込む
+ *
+ * 取得元:
+ *   - Backlog: ~/vault/task/sync.json に列挙したスペースの、自分が担当で未完了の課題(bee 経由)
+ *   - GitHub:  自分が assignee の issue / PR と、レビュー依頼された PR(gh 経由)
+ *
+ * 取り込み先は Taskwarrior。uuid は URL から決定的に生成するので何度実行しても同じタスクに収束し、
+ * 取得元で閉じた(取得結果から消えた)タスクは completed にする。取得元のどれか 1 つでも失敗したら
+ * 取得結果が不完全なので、completed の判定を含めて何も取り込まずに終了する。
+ * 同期されたタスク(UDA source 付き)は取得元が正。Taskwarrior 側で加えた編集は次回の同期で上書きされる。
+ *
+ * 使い方: task-sync
+ *   標準出力に add/mod/skip/completed の件数を出す。通知は task-alert が担当する。
+ */
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+// ---------------------------------------------------------------------------
+// コントラクト
+// ---------------------------------------------------------------------------
+
+type Source = "backlog" | "github";
+
+/** 取得元から得たタスクの正規化形。取得元ごとの差はここで吸収する */
+type SourceTask = {
+  source: Source;
+  /** Backlog: 課題キー / GitHub: owner/repo#番号 */
+  externalId: string;
+  /** 一意キー。uuid の元になる */
+  url: string;
+  title: string;
+  /** Backlog: プロジェクトキー / GitHub: owner/repo */
+  project: string;
+  /** YYYY-MM-DD */
+  due?: string;
+  /** ISO 8601 */
+  created: string;
+  tags: string[];
+};
+
+/** `task import` に渡すレコード。UDA(source, external_id, url)は taskrc の定義と対応する */
+type ImportRecord = {
+  uuid: string;
+  description: string;
+  status: "pending" | "completed";
+  project: string;
+  entry: string;
+  due?: string;
+  end?: string;
+  tags?: string[];
+  source: Source;
+  external_id: string;
+  url: string;
+};
+
+type SyncConfig = {
+  backlog: {
+    /** bee に登録済みのスペースのホスト名(例: example.backlog.com) */
+    spaces: string[];
+  };
+};
+
+const CONFIG_PATH = join(homedir(), "vault", "task", "sync.json");
+/** RFC 4122 の URL 名前空間 */
+const UUID_NAMESPACE_URL = "6ba7b811-9dad-11d1-80b4-00c04fd430c8";
+/** Backlog の「完了」ステータス ID。標準ステータスで、削除も ID 変更もできない */
+const BACKLOG_STATUS_CLOSED = 4;
+const BACKLOG_PAGE_SIZE = 100;
+const GITHUB_SEARCH_LIMIT = 1000;
+
+// ---------------------------------------------------------------------------
+// 共通
+// ---------------------------------------------------------------------------
+
+function run(cmd: string[], stdin?: string): string {
+  const proc = Bun.spawnSync(cmd, {
+    stdin: stdin === undefined ? "ignore" : Buffer.from(stdin),
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (proc.exitCode !== 0) {
+    throw new Error(`${cmd[0]} failed (exit ${proc.exitCode}): ${proc.stderr.toString().trim()}`);
+  }
+  return proc.stdout.toString();
+}
+
+function uuidV5(name: string): string {
+  const ns = Buffer.from(UUID_NAMESPACE_URL.replace(/-/g, ""), "hex");
+  const hash = createHash("sha1").update(ns).update(name, "utf8").digest();
+  hash[6] = (hash[6] & 0x0f) | 0x50;
+  hash[8] = (hash[8] & 0x3f) | 0x80;
+  const h = hash.subarray(0, 16).toString("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+/** Taskwarrior の日時表現(UTC、YYYYMMDDTHHMMSSZ) */
+function toTaskDate(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+/** 期限日はその日の終わり(ローカル時刻)まで有効とみなす。日付だけの due を 00:00 にすると当日が即 overdue になる */
+function dueEndOfDay(yyyymmdd: string): string {
+  return toTaskDate(new Date(`${yyyymmdd}T23:59:59`));
+}
+
+function loadConfig(): SyncConfig {
+  const config = JSON.parse(readFileSync(CONFIG_PATH, "utf8")) as SyncConfig;
+  if (!Array.isArray(config.backlog?.spaces)) {
+    throw new Error(`${CONFIG_PATH}: backlog.spaces must be an array of hostnames`);
+  }
+  return config;
+}
+
+// ---------------------------------------------------------------------------
+// 取得元: Backlog (bee)
+// ---------------------------------------------------------------------------
+
+type BeeIssue = {
+  issueKey: string;
+  summary: string;
+  status: { id: number; name: string };
+  /** 暦日を UTC 0 時で表した日時(例: 2026-06-26T00:00:00Z)。時刻部分に意味は無い */
+  dueDate: string | null;
+  created: string;
+};
+
+function fetchBacklog(host: string): SourceTask[] {
+  const tasks: SourceTask[] = [];
+  for (let offset = 0; ; offset += BACKLOG_PAGE_SIZE) {
+    const page = JSON.parse(
+      run([
+        "bee", "issue", "list",
+        "-s", host,
+        "-a", "@me",
+        "-L", String(BACKLOG_PAGE_SIZE),
+        "--offset", String(offset),
+        "--json", "issueKey,summary,status,dueDate,created",
+      ]),
+    ) as BeeIssue[];
+    for (const issue of page) {
+      if (issue.status.id === BACKLOG_STATUS_CLOSED) continue;
+      tasks.push({
+        source: "backlog",
+        externalId: issue.issueKey,
+        url: `https://${host}/view/${issue.issueKey}`,
+        title: issue.summary,
+        project: issue.issueKey.replace(/-\d+$/, ""),
+        due: issue.dueDate?.slice(0, "YYYY-MM-DD".length),
+        created: issue.created,
+        tags: [],
+      });
+    }
+    if (page.length < BACKLOG_PAGE_SIZE) break;
+  }
+  return tasks;
+}
+
+// ---------------------------------------------------------------------------
+// 取得元: GitHub (gh)
+// ---------------------------------------------------------------------------
+
+type GhItem = {
+  number: number;
+  title: string;
+  url: string;
+  createdAt: string;
+  repository: { nameWithOwner: string };
+};
+
+function ghSearch(kind: "issues" | "prs", filter: string[], tags: string[]): SourceTask[] {
+  const items = JSON.parse(
+    run([
+      "gh", "search", kind,
+      ...filter,
+      "--state", "open",
+      "--limit", String(GITHUB_SEARCH_LIMIT),
+      "--json", "number,title,url,createdAt,repository",
+    ]),
+  ) as GhItem[];
+  if (items.length >= GITHUB_SEARCH_LIMIT) {
+    throw new Error(`gh search ${kind} ${filter.join(" ")}: hit the ${GITHUB_SEARCH_LIMIT} item limit; results may be incomplete`);
+  }
+  return items.map((item) => ({
+    source: "github",
+    externalId: `${item.repository.nameWithOwner}#${item.number}`,
+    url: item.url,
+    title: item.title,
+    project: item.repository.nameWithOwner,
+    created: item.createdAt,
+    tags,
+  }));
+}
+
+function fetchGithub(): SourceTask[] {
+  return [
+    ...ghSearch("issues", ["--assignee", "@me"], []),
+    ...ghSearch("prs", ["--assignee", "@me"], []),
+    ...ghSearch("prs", ["--review-requested", "@me"], ["review"]),
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// 変換
+// ---------------------------------------------------------------------------
+
+/** 同じ URL が複数の検索に現れた場合(assignee かつ review 依頼など)はタグを合流させる */
+function dedupe(tasks: SourceTask[]): SourceTask[] {
+  const byUrl = new Map<string, SourceTask>();
+  for (const task of tasks) {
+    const existing = byUrl.get(task.url);
+    if (existing) {
+      existing.tags = [...new Set([...existing.tags, ...task.tags])];
+    } else {
+      byUrl.set(task.url, { ...task, tags: [...task.tags] });
+    }
+  }
+  return [...byUrl.values()];
+}
+
+function toImportRecord(task: SourceTask): ImportRecord {
+  const record: ImportRecord = {
+    uuid: uuidV5(task.url),
+    description: task.title,
+    status: "pending",
+    project: task.project,
+    entry: toTaskDate(new Date(task.created)),
+    source: task.source,
+    external_id: task.externalId,
+    url: task.url,
+  };
+  if (task.due) record.due = dueEndOfDay(task.due);
+  if (task.tags.length > 0) record.tags = task.tags;
+  return record;
+}
+
+// ---------------------------------------------------------------------------
+// Taskwarrior
+// ---------------------------------------------------------------------------
+
+const TASK_RC = ["rc.verbose=nothing", "rc.color=off", "rc.confirmation=off", "rc.recurrence.confirmation=no"];
+
+type ExportedTask = Record<string, unknown> & { uuid: string; source?: Source };
+
+/** 過去に同期した(UDA source を持つ)未完了タスク。手で作ったタスクは対象外 */
+function loadSyncedPending(): ExportedTask[] {
+  const out = run(["task", ...TASK_RC, "rc.json.array=1", "status:pending", "export"]);
+  const all = JSON.parse(out || "[]") as ExportedTask[];
+  return all.filter((t) => t.source !== undefined);
+}
+
+/** export の出力から、import に渡すべきでない計算済み属性を落として completed にする */
+function toCompleted(exported: ExportedTask, now: Date): Record<string, unknown> {
+  const { id: _id, urgency: _urgency, modified: _modified, ...rest } = exported;
+  return { ...rest, status: "completed", end: toTaskDate(now) };
+}
+
+function importRecords(records: unknown[]): { add: number; mod: number; skip: number } {
+  if (records.length === 0) return { add: 0, mod: 0, skip: 0 };
+  const out = run(["task", ...TASK_RC, "import", "-"], JSON.stringify(records));
+  const count = (verb: string) => (out.match(new RegExp(`^ ${verb} `, "gm")) ?? []).length;
+  const result = { add: count("add"), mod: count("mod"), skip: count("skip") };
+  // 集計は task import の人間向け出力に依存している。書式が変わったら件数が合わなくなるので知らせる
+  if (result.add + result.mod + result.skip !== records.length) {
+    console.error(`task-sync: import output format may have changed (counted ${result.add + result.mod + result.skip} of ${records.length})`);
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// main
+// ---------------------------------------------------------------------------
+
+function main(): void {
+  const config = loadConfig();
+  const fetched = dedupe([
+    ...config.backlog.spaces.flatMap(fetchBacklog),
+    ...fetchGithub(),
+  ]);
+  const records = fetched.map(toImportRecord);
+
+  const now = new Date();
+  const liveUuids = new Set(records.map((r) => r.uuid));
+  const completed = loadSyncedPending()
+    .filter((t) => !liveUuids.has(t.uuid))
+    .map((t) => toCompleted(t, now));
+
+  const result = importRecords([...records, ...completed]);
+  console.log(
+    `task-sync: fetched=${records.length} add=${result.add} mod=${result.mod} skip=${result.skip} completed=${completed.length}`,
+  );
+}
+
+main();
