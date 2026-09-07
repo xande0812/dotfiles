@@ -24,5 +24,8 @@
 [ghq]
     root = ~/src
 
+[wt]
+    basedir = .git/wt
+
 [alias]
     ph = push origin HEAD

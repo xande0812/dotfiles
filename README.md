@@ -15,7 +15,7 @@ macOS の環境を mise で宣言的に再現するための設定一式。
 # Xcode Command Line Tools
 xcode-select --install
 
-# Homebrew（AeroSpace と sbx のタスクが依存）
+# Homebrew（brew CLI 経由で導入する [tasks] のパッケージが依存）
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # mise
@@ -83,7 +83,7 @@ bootstrap で自動化できないもの。上から順に。
 | 対象 | 管理方法 |
 |---|---|
 | GUI アプリ・フォント | `[bootstrap.packages]`（mise の brew-cask バックエンド） |
-| AeroSpace / Docker Sandboxes | `[tasks]` から brew CLI 経由（タップが API メタデータ未公開のため） |
+| AeroSpace / Docker Sandboxes / JankyBorders / ecsk / Screendrop / git-wt | `[tasks]` から brew CLI 経由（タップが API メタデータ未公開のため） |
 | CLI ツール | `[tools]`（グローバルは `.config/mise/config.toml`） |
 | 設定ファイル | `[dotfiles]` |
 | タスク集約（Taskwarrior + task-sync） | `[dotfiles]` + `[tasks.task-sync-install]`。詳細は `task-sync.md` |

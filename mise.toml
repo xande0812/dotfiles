@@ -82,9 +82,18 @@ brew list --formula ecsk &>/dev/null || {
 description = "Install Screendrop via Homebrew CLI"
 run = "brew list --cask screendrop &>/dev/null || brew install --cask fayazara/tap/screendrop"
 
+[tasks.git-wt]
+description = "Install git-wt via Homebrew CLI"
+run = """
+brew list --formula git-wt &>/dev/null || {
+  brew trust --formula k1LoW/tap/git-wt
+  brew install k1LoW/tap/git-wt
+}
+"""
+
 [tasks.brew-extras]
 description = "Install packages that require the Homebrew CLI"
-depends = ["aerospace", "sbx", "borders", "ecsk", "screendrop"]
+depends = ["aerospace", "sbx", "borders", "ecsk", "screendrop", "git-wt"]
 
 [tasks.macos-keyrepeat]
 description = "Set macOS key repeat rate"

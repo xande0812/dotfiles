@@ -1,7 +1,11 @@
+autoload -Uz compinit
+compinit
+
 eval "$(mise activate zsh)"
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh --cmd cd)"
 eval "$(atuin init zsh --disable-up-arrow)"
+eval "$(git wt --init zsh)"
 
 source ~/.config/zsh/ghq-fzf.zsh
 source ~/.config/zsh/dotenvx.zsh
