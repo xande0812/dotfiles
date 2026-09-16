@@ -50,8 +50,7 @@ automatically-unhide-macos-hidden-apps = false
 # even when they are invisible.
 # This config option is only available since 'config-version = 2'
 # Fallback value (if you omit the key): persistent-workspaces = []
-persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B",
-                         "C", "D", "E", "F", "G", "I", "M", "N", "O", "P", "Q",
+persistent-workspaces = ["A", "B", "C", "D", "E", "F", "G", "I", "M", "N", "O", "P", "Q",
                          "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 # A callback that runs every time binding mode changes
@@ -130,15 +129,6 @@ gaps.outer.right =      3
     alt-equal = 'resize smart +50'
 
     # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
-    alt-1 = 'workspace 1'
-    alt-2 = 'workspace 2'
-    alt-3 = 'workspace 3'
-    alt-4 = 'workspace 4'
-    alt-5 = 'workspace 5'
-    alt-6 = 'workspace 6'
-    alt-7 = 'workspace 7'
-    alt-8 = 'workspace 8'
-    alt-9 = 'workspace 9'
     alt-a = 'workspace A' # In your config, you can drop workspace bindings that you don't need
     alt-b = 'workspace B'
     alt-c = 'workspace C'
@@ -163,15 +153,6 @@ gaps.outer.right =      3
     alt-z = 'workspace Z'
 
     # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
-    alt-shift-1 = 'move-node-to-workspace 1'
-    alt-shift-2 = 'move-node-to-workspace 2'
-    alt-shift-3 = 'move-node-to-workspace 3'
-    alt-shift-4 = 'move-node-to-workspace 4'
-    alt-shift-5 = 'move-node-to-workspace 5'
-    alt-shift-6 = 'move-node-to-workspace 6'
-    alt-shift-7 = 'move-node-to-workspace 7'
-    alt-shift-8 = 'move-node-to-workspace 8'
-    alt-shift-9 = 'move-node-to-workspace 9'
     alt-shift-a = 'move-node-to-workspace A'
     alt-shift-b = 'move-node-to-workspace B'
     alt-shift-c = 'move-node-to-workspace C'
@@ -202,6 +183,13 @@ gaps.outer.right =      3
 
     # See: https://nikitabobko.github.io/AeroSpace/commands#mode
     alt-shift-semicolon = 'mode service'
+
+    # Window commands on ctrl-alt. Cornix sends these from the NAV layer (Z/T/R/B).
+    # Never bind ctrl-alt-h/j/k/l here: herdr uses them for pane focus inside the terminal.
+    ctrl-alt-z = 'fullscreen'
+    ctrl-alt-t = 'layout floating tiling'
+    ctrl-alt-r = 'flatten-workspace-tree'
+    ctrl-alt-b = 'balance-sizes'
 
 # 'service' binding mode declaration.
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes

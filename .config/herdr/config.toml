@@ -1,0 +1,16 @@
+onboarding = false
+
+[theme]
+name = "one-dark"
+auto_switch = false
+
+[keys]
+# Cornix: right knob press sends F18. Prefix bindings are kept so the same actions work from
+# the built-in Mac keyboard.
+open_notification_target = ["prefix+o", "f18"]
+# Direct pane-focus chords (herdr docs recommend the ctrl+alt family as terminal-safe).
+# Cornix sends these from the NAV layer (S/D/E/F); the Mac keyboard uses Ctrl+Option+h/j/k/l.
+focus_pane_left = ["prefix+h", "ctrl+alt+h"]
+focus_pane_down = ["prefix+j", "ctrl+alt+j"]
+focus_pane_up = ["prefix+k", "ctrl+alt+k"]
+focus_pane_right = ["prefix+l", "ctrl+alt+l"]

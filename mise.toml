@@ -15,6 +15,7 @@ dotfiles.default_mode = "symlink"
 "~/.srt-settings.json" = {}
 "~/.config/pnpm" = {}
 "~/.config/ghostty" = {}
+"~/.config/herdr/config.toml" = {}
 "~/.aerospace.toml" = {}
 "~/.claude/CLAUDE.md" = {}
 "~/.claude/skills/japanese-tech-writing" = {}
