@@ -20,6 +20,7 @@ dotfiles.default_mode = "symlink"
 "~/.claude/CLAUDE.md" = {}
 "~/.claude/skills/japanese-tech-writing" = {}
 "~/.claude/skills/cognitive-rhythm-writing" = {}
+"~/.claude/skills/textlint-ai-words" = {}
 "~/.githooks" = {}
 "~/.local/bin/ssh-sign" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/home-audit" = { mode = "copy", mode_bits = "0755" }
@@ -28,8 +29,12 @@ dotfiles.default_mode = "symlink"
 "~/.local/bin/pgdump-bastion" = { mode = "copy", mode_bits = "0755" }
 "~/.config/borders/bordersrc" = { mode = "copy", mode_bits = "0755" }
 "~/.config/task/taskrc" = {}
+"~/.config/textlint/package.json" = {}
+"~/.config/textlint/.textlintrc.json" = {}
+"~/.config/textlint/pnpm-workspace.yaml" = {}
 "~/.local/bin/task-sync" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/task-alert" = { mode = "copy", mode_bits = "0755" }
+"~/.local/bin/textlint-ja" = { mode = "copy", mode_bits = "0755" }
 "~/Library/LaunchAgents/dev.xande.task-sync.plist" = { mode = "copy" }
 
 [bootstrap.packages]
@@ -47,6 +52,10 @@ dotfiles.default_mode = "symlink"
 "brew-cask:font-moralerspace" = "latest"
 "brew-cask:ghostty" = "latest"
 "brew-cask:obsidian" = "latest"
+
+[tasks.textlint-global]
+description = "Install the global textlint toolchain into ~/.config/textlint"
+run = "pnpm --dir \"$HOME/.config/textlint\" install"
 
 [tasks.aerospace]
 description = "Install AeroSpace via Homebrew CLI"

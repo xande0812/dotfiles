@@ -38,6 +38,7 @@ mise bootstrap                    # [dotfiles] + [bootstrap.packages] を適用
 mise bootstrap --only dotfiles    # [dotfiles] のみ再適用（copy モードのファイルを編集した後に必要）
 mise run brew-extras              # bootstrap でカバーされない [tasks] のインストール（aerospace、sbx）
 mise run git-signing-key          # commit 署名用の Secure Enclave 鍵を生成
+mise run textlint-global          # ~/.config/textlint にグローバル textlint を導入
 ```
 
 ### 2種類の SSH 鍵、2つの用途
@@ -56,6 +57,30 @@ SSH/git署名周りの設定を触るときは、これらを混同しないこ�
 既知の失敗モードの詳細は `home-audit.md` に記載されている。スクリプトを変更する前、特に
 `EXCLUDES`/`PRUNE_NAMES` を触る前（除外エントリには必ず理由コメントを付けること）や bash の機能を
 使う前（macOS 標準の bash 3.2 が対象のため `mapfile`/`readarray` は不可）に読むこと。
+
+### textlint（AI っぽい日本語の検出）
+
+`textlint-rule-preset-ai-words-ja` をグローバルに使うための構成。2つの部分からなる。
+
+- `.config/textlint/` — textlint 専用の pnpm プロジェクト。`mise run textlint-global` で
+  `~/.config/textlint` に install する。設定ファイルだけを symlink でマップしているので
+  `node_modules` はリポジトリ内に作られない。`.local/bin/textlint-ja` が cwd に関係なく
+  この設定で textlint を起動するラッパー。
+- `.claude/skills/textlint-ai-words/` — Claude Code の PostToolUse フック。Markdown を書いた
+  直後に lint し、検出時は exit 2 で指摘を Claude に返す。
+
+**mise の `npm:` バックエンドは使えない**: textlint はルールパッケージを textlint 自身の
+インストール位置から `require.resolve()` で解決するため、本体とルールが同じ node_modules
+ツリーに居る必要がある。`npm:` バックエンドはパッケージごとに prefix を分けるので解決できない。
+
+**フックを `~/.claude/settings.json` に書かない理由**: Claude Code 自身が theme/tui/model を
+そのファイルに書き戻すため、dotfiles で追跡すると差分が汚れる。代わりに skills-directory
+plugin（`~/.claude/skills/<name>/` に `.claude-plugin/plugin.json` を置くと自動ロードされる）
+として hooks を持たせている。personal scope なので全プロジェクトに効く。
+
+**preset が `minimumReleaseAge` に引っかかる**: グローバルの pnpm 設定が7日未満のリリースを
+拒否するのに対し、この preset は全バージョンが新しい。`.config/textlint/pnpm-workspace.yaml`
+でバージョン単位の例外を切っている。詳細はそのファイルのコメントを参照。
 
 ### task-sync
 

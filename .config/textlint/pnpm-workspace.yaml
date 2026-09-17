@@ -1,0 +1,8 @@
+# Per-project pnpm settings. pnpm 11 reads settings from this file, not .npmrc.
+
+# The global config sets minimumReleaseAge: 10080 (7 days), and every published
+# version of textlint-rule-preset-ai-words-ja is newer than that (first release
+# 2026-09-13), so the install is blocked without an exemption. Scoped to the one
+# pinned version; droppable once 1.2.1 turns 7 days old (2026-09-22).
+minimumReleaseAgeExclude:
+  - textlint-rule-preset-ai-words-ja@1.2.1

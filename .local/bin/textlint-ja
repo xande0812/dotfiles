@@ -1,0 +1,14 @@
+#!/bin/sh
+# Run the globally installed textlint with the global AI-words config,
+# regardless of the current working directory.
+set -eu
+
+root="$HOME/.config/textlint"
+bin="$root/node_modules/.bin/textlint"
+
+if [ ! -x "$bin" ]; then
+  echo "textlint-ja: not installed. Run: mise run textlint-global" >&2
+  exit 1
+fi
+
+exec "$bin" --config "$root/.textlintrc.json" "$@"
