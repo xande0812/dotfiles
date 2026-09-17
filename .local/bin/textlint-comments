@@ -1,0 +1,299 @@
+#!/usr/bin/env bun
+/**
+ * textlint-comments — ソースコード中の日本語コメントに textlint を当てる
+ *
+ * コメント以外の文字を1文字ずつ同じ幅のスペースに置き換えたテキストを作り、
+ * それを textlint にプレーンテキストとして渡す。位置が保存されるので、指摘の
+ * 行・列がそのまま原文の座標になる。
+ *
+ * textlint のプラグインを書かない理由: ソースコード用に公開されている
+ * textlint-plugin-jsx はコメントを Comment ノードとして出すが、
+ * preset-ai-words-ja は Str しか購読しないため 1 件も反応しない。
+ * 逆に文字列リテラルは Str として出るので、入れると誤検知だけが増える。
+ *
+ * 走査は字句解析であって構文解析ではないので、正確さは追わない。取りこぼしと
+ * 誤検知が残るのを承知の上で、拾えるものを拾う道具として使う。
+ *
+ * コメントでないものを拾う（誤検知。フックを止めうる）:
+ *   - JS の正規表現リテラル。`/[//]/` の `//` を行コメントと見なす
+ *   - YAML のブロックスカラー（`|`）の中の `#` で始まる行
+ *   - shell の複数行にまたがる引用符、TOML の `"""`、Rust の `r#"..."#`
+ *
+ * コメントを見落とす（見逃し。害が小さいので迷ったらこちらに倒す）:
+ *   - テンプレートリテラルの `${...}` の中のコメント
+ *   - `echo ok;# コメント` のように直前が空白でない `#`
+ *   - `<<END-OF` のように区切り語に記号を含むヒアドキュメント以降のすべて
+ */
+
+import { extname } from "node:path";
+
+type Syntax = "c-like" | "rust" | "shell" | "hash";
+
+const BY_EXTENSION: Record<string, Syntax> = {
+  ".ts": "c-like",
+  ".tsx": "c-like",
+  ".js": "c-like",
+  ".jsx": "c-like",
+  ".mjs": "c-like",
+  ".cjs": "c-like",
+  ".go": "c-like",
+  ".rs": "rust",
+  ".sh": "shell",
+  ".bash": "shell",
+  ".zsh": "shell",
+  ".yaml": "hash",
+  ".yml": "hash",
+  ".toml": "hash",
+};
+
+/** 拡張子を持たない実行可能スクリプト向け。`.local/bin` 配下がこの形。 */
+const BY_INTERPRETER: Record<string, Syntax> = {
+  sh: "shell",
+  bash: "shell",
+  zsh: "shell",
+  dash: "shell",
+  node: "c-like",
+  bun: "c-like",
+  deno: "c-like",
+};
+
+const JAPANESE = /[぀-ヿ㐀-鿿ｦ-ﾟ]/;
+const HEREDOC_WORD = /[A-Za-z0-9_]/;
+
+function syntaxOf(file: string, firstLine: string): Syntax | undefined {
+  const extension = extname(file);
+  if (extension !== "") return BY_EXTENSION[extension];
+
+  const interpreter = /^#!\s*(?:\S*\/)?(?:env\s+)?(\S+)/.exec(firstLine)?.[1];
+  return interpreter ? BY_INTERPRETER[interpreter] : undefined;
+}
+
+/**
+ * `'a` や `'static` はライフタイムであって文字リテラルではない。これを文字列の
+ * 開始と誤ると、閉じる `'` を探して後続のコメントまで飲み込んでしまう。
+ */
+function isCharLiteral(chars: string[], start: number): boolean {
+  if (chars[start + 1] !== "\\") return chars[start + 2] === "'";
+
+  for (let i = start + 2; i < chars.length && i < start + 12; i++) {
+    if (chars[i] === "'") return true;
+    if (chars[i] === "\n") return false;
+  }
+  return false;
+}
+
+function maskCLike(chars: string[], rust: boolean): string[] {
+  const out = chars.slice();
+  const blank = (i: number) => {
+    if (out[i] !== "\n") out[i] = " ";
+  };
+
+  let i = 0;
+  while (i < chars.length) {
+    const c = chars[i];
+    const next = chars[i + 1];
+
+    if (c === "/" && next === "/") {
+      blank(i++);
+      blank(i++);
+      // Rust の /// と //! はマーカーなので本文に含めない。
+      while (i < chars.length && (chars[i] === "/" || chars[i] === "!")) blank(i++);
+      while (i < chars.length && chars[i] !== "\n") i++;
+      continue;
+    }
+
+    if (c === "/" && next === "*") {
+      blank(i++);
+      blank(i++);
+      // Rust のブロックコメントだけが入れ子にできる。
+      let depth = 1;
+      while (i < chars.length && depth > 0) {
+        if (rust && chars[i] === "/" && chars[i + 1] === "*") {
+          depth++;
+          blank(i++);
+          blank(i++);
+        } else if (chars[i] === "*" && chars[i + 1] === "/") {
+          depth--;
+          blank(i++);
+          blank(i++);
+        } else {
+          i++;
+        }
+      }
+      continue;
+    }
+
+    if (rust && c === "'" && !isCharLiteral(chars, i)) {
+      blank(i++);
+      continue;
+    }
+
+    if (c === '"' || c === "'" || c === "`") {
+      const quote = c;
+      // 改行をまたげるのはテンプレートリテラルと Go の raw string だけ。
+      // それ以外を改行で打ち切らないと、編集途中の未終端の文字列が
+      // ファイルの残り全体を覆い隠す。
+      const spansLines = quote === "`";
+      blank(i++);
+      while (i < chars.length && chars[i] !== quote) {
+        if (!spansLines && chars[i] === "\n") break;
+        if (chars[i] === "\\") blank(i++);
+        if (i < chars.length) blank(i++);
+      }
+      if (i < chars.length && chars[i] === quote) blank(i++);
+      continue;
+    }
+
+    blank(i++);
+  }
+
+  return out;
+}
+
+function maskHash(chars: string[], heredoc: boolean): string[] {
+  const out = chars.slice();
+  const blank = (i: number) => {
+    if (out[i] !== "\n") out[i] = " ";
+  };
+
+  /** ヒアドキュメント本体を区切り行まで空白化し、その次の位置を返す。 */
+  const skipHeredocBody = (from: number, delimiter: string): number => {
+    let i = from;
+    while (i < chars.length) {
+      let end = i;
+      while (end < chars.length && chars[end] !== "\n") end++;
+      const line = chars.slice(i, end).join("").trim();
+      for (let k = i; k < end; k++) blank(k);
+      i = end < chars.length ? end + 1 : end;
+      if (line === delimiter) break;
+    }
+    return i;
+  };
+
+  /** `<<EOF` `<<-'EOF'` などの区切り語。ヒアドキュメントでなければ空文字。 */
+  const heredocDelimiter = (from: number): string => {
+    let i = from + 2;
+    if (chars[i] === "-") i++;
+    while (chars[i] === " " || chars[i] === "\t") i++;
+
+    const quote = chars[i] === "'" || chars[i] === '"' ? chars[i] : "";
+    if (quote) i++;
+
+    let word = "";
+    while (i < chars.length && HEREDOC_WORD.test(chars[i] ?? "")) word += chars[i++];
+    return quote && chars[i] !== quote ? "" : word;
+  };
+
+  let pending = "";
+  let i = 0;
+  while (i < chars.length) {
+    const c = chars[i];
+
+    if (c === "\n") {
+      i++;
+      if (pending) {
+        i = skipHeredocBody(i, pending);
+        pending = "";
+      }
+      continue;
+    }
+
+    if (heredoc && c === "<" && chars[i + 1] === "<") {
+      pending = pending || heredocDelimiter(i);
+      blank(i++);
+      blank(i++);
+      continue;
+    }
+
+    if (c === '"' || c === "'") {
+      const quote = c;
+      blank(i++);
+      while (i < chars.length && chars[i] !== quote && chars[i] !== "\n") {
+        if (chars[i] === "\\") blank(i++);
+        if (i < chars.length && chars[i] !== "\n") blank(i++);
+      }
+      if (chars[i] === quote) blank(i++);
+      continue;
+    }
+
+    // `#` がコメントを開くのは語の先頭にあるときだけ。`${name#接頭辞}` や
+    // YAML の `key: a#b` はコメントではない。
+    const opensComment = i === 0 || /\s/.test(chars[i - 1] ?? "");
+    if (c === "#" && opensComment) {
+      const shebang = i === 0 && chars[1] === "!";
+      blank(i++);
+      while (i < chars.length && chars[i] !== "\n") {
+        if (shebang) blank(i++);
+        else i++;
+      }
+      continue;
+    }
+
+    blank(i++);
+  }
+
+  return out;
+}
+
+/**
+ * 日本語を含まない行を落とす。上の走査は字句解析なので取りこぼしがあるが、
+ * 残った断片のうち日本語を含むものだけを見れば実害はほぼ消える。
+ */
+function keepJapaneseOnly(masked: string): string {
+  return masked
+    .split("\n")
+    .map((line) => (JAPANESE.test(line) ? line : " ".repeat(line.length)))
+    .join("\n");
+}
+
+async function main() {
+  const [file, ...passthrough] = Bun.argv.slice(2);
+  if (!file) {
+    console.error("usage: textlint-comments <file> [textlint args...]");
+    process.exit(64);
+  }
+
+  const source = await Bun.file(file).text();
+  const syntax = syntaxOf(file, source.slice(0, source.indexOf("\n") + 1 || undefined));
+  if (!syntax) process.exit(0);
+
+  // 位置を保つには UTF-16 の添字ではなくコードポイントで数える必要がある。
+  // 添字を混ぜると絵文字より後ろの走査位置と出力位置がずれる。
+  const chars = [...source];
+  const masked = keepJapaneseOnly(
+    (syntax === "shell" || syntax === "hash"
+      ? maskHash(chars, syntax === "shell")
+      : maskCLike(chars, syntax === "rust")
+    ).join(""),
+  );
+
+  // textlint を起動するだけで形態素解析の辞書を読む。検査対象が無いなら省く。
+  if (masked.trim() === "") process.exit(0);
+
+  // 拡張子を .txt にするのは textlint にプレーンテキストとして解釈させるため。
+  // 出力にはその名前が出るので、呼び出し側が原文のパスに戻せるよう取り除く。
+  const stdinName = `${file}.txt`;
+  const proc = Bun.spawn(
+    [
+      `${process.env.HOME}/.local/bin/textlint-ja`,
+      "--stdin",
+      "--stdin-filename",
+      stdinName,
+      ...passthrough,
+    ],
+    { stdin: new TextEncoder().encode(masked), stdout: "pipe", stderr: "pipe" },
+  );
+
+  const [out, err] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+  ]);
+  const status = await proc.exited;
+
+  const restore = (text: string) => text.replaceAll(stdinName, file);
+  if (out) process.stdout.write(restore(out));
+  if (err) process.stderr.write(restore(err));
+  process.exit(status);
+}
+
+await main();

@@ -35,6 +35,7 @@ dotfiles.default_mode = "symlink"
 "~/.local/bin/task-sync" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/task-alert" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/textlint-ja" = { mode = "copy", mode_bits = "0755" }
+"~/.local/bin/textlint-comments" = { mode = "copy", mode_bits = "0755" }
 "~/Library/LaunchAgents/dev.xande.task-sync.plist" = { mode = "copy" }
 
 [bootstrap.packages]

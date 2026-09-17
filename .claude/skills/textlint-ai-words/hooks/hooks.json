@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/lint-markdown.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/lint-prose.sh",
             "timeout": 30
           }
         ]
