@@ -66,6 +66,14 @@ rc_json="$DEFAULT_RC"
 if git cat-file -e "$oid:.secretlintrc.json" 2>/dev/null; then
   rc_json=$(git cat-file blob "$oid:.secretlintrc.json")
 
+  # コマンド置換は NUL を保持できない。NUL を含む不正な JSON が、NUL の落ちた
+  # 妥当な JSON として通ってしまい、検証したものと push されるものが食い違う。
+  if [ "$(git cat-file -s "$oid:.secretlintrc.json")" \
+     -ne "$(git cat-file blob "$oid:.secretlintrc.json" | tr -d '\0' | wc -c)" ]; then
+    echo "pre-push: .secretlintrc.json に NUL が含まれています。" >&2
+    exit 1
+  fi
+
   # コミットされた設定は信頼する。書いた本人は --no-verify も使えるので、意図的に
   # 緩める設定 (allows に /.*/、preset に disabled: true) を止める意味がない。
   # ここで弾くのは、意図せず検査が丸ごと無効になる退化した設定だけ。
@@ -111,10 +119,12 @@ git diff --raw --no-renames --diff-filter=ACMT -z "$base" "$oid" > "$changed"
 
 found=0
 while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
-  # リポジトリ直下の設定ファイルは上で読んでいる。検査対象としては組み込み ignore で
-  # 除外されるため、複製しても意味がない。
+  # リポジトリ直下の .secretlintrc.json は設定として上で読んでいる。組み込み ignore の
+  # 対象なので複製しても検査されない。中身は「信頼する設定」として扱う。
+  # .secretlintignore はサポートしないので、下の拒否パターンに落として中止させる
+  # (複製から外すだけだと、そのファイル自体に秘密を書いて隠せてしまう)。
   case "$path" in
-    .secretlintrc.json|.secretlintignore) continue ;;
+    .secretlintrc.json) continue ;;
   esac
 
   # secretlint は下のパスを常に検査対象から外す (module/search.js の
@@ -122,10 +132,13 @@ while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
   # CLI では外せない。複製しても検査されないまま素通りするので中止する。
   #   **/.git **/node_modules **/.secretlintrc **/.secretlintrc.{json,yaml,yml,js}
   #   **/.secretlintignore*
+  # .secretlintrc* は前方一致で弾く。ディレクトリとして prune されるため
+  # `nested/.secretlintrc.json/leak.env` のように中に隠せる一方、実際に ignore
+  # されない .secretlintrc.cjs や .secretlintrc.backup まで巻き込むが、検査できない
+  # ものを通すより安全側に倒す。
   case "/$path" in
     */.git|*/.git/*|*/node_modules|*/node_modules/*|\
-    */.secretlintrc|*/.secretlintrc.json|*/.secretlintrc.yaml|\
-    */.secretlintrc.yml|*/.secretlintrc.js|*/.secretlintignore*)
+    */.secretlintrc*|*/.secretlintignore*)
       echo "pre-push: $path は secretlint が検査できない名前のため push を中止します。" >&2
       exit 1
       ;;
@@ -138,6 +151,13 @@ while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
   [ "$dst_mode" = 160000 ] && continue
 
   mkdir -p "$scan/$(dirname "$path")"
+  # macOS のファイルシステムは大文字小文字を区別せず Unicode も正規化するため、
+  # git 上では別物の 2 パスが一時領域で同じファイルになる。無害な側が秘密の側を
+  # 上書きして素通りするので、衝突したら中止する。
+  if [ -e "$scan/$path" ]; then
+    echo "pre-push: $path が一時領域で別のパスと衝突するため push を中止します。" >&2
+    exit 1
+  fi
   git cat-file blob "$oid:$path" > "$scan/$path"
   found=1
 done < "$changed"
@@ -163,7 +183,7 @@ fi
 # 骨抜きにできるのは避けられない (allows に /.*/ と書くのと同じ) が、少なくとも
 # 通信と書き込みはさせない。
 if ! docker run --rm \
-  --network none \
+  --network none --read-only \
   --mount type=bind,source="$tmp",target="$tmp",readonly \
   --workdir "$scan" \
   "$SECRETLINT_IMAGE" secretlint \

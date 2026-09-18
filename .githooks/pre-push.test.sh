@@ -102,8 +102,8 @@ check "リポジトリ設定で許可した DSN" ok
 scenario o2; printf '%s\n' "$RC" > .secretlintrc.json; commit_and_hook
 check "設定ファイルだけの push" ok
 
-scenario o3; printf 'nothing\n' > .secretlintignore; commit_and_hook
-check ".secretlintignore だけの push" ok
+scenario o3; echo ok > b.txt; commit_and_hook
+check "通常のファイル変更" ok
 
 scenario o4; echo ok > 'weird*name.txt'; commit_and_hook
 check "glob 文字を含むファイル名" ok
@@ -129,6 +129,38 @@ check ".secretlintignore.backup に隠した秘密" block
 
 scenario g4; mkdir -p nested; printf '%s\n' "$RC" > nested/.secretlintrc.yaml; commit_and_hook
 check "ネストした .secretlintrc.yaml" block
+
+scenario g5; mkdir -p 'nested/.secretlintrc.json'; echo "$LEAK" > 'nested/.secretlintrc.json/leak.env'
+echo harmless > also-changed.txt; commit_and_hook
+check ".secretlintrc.json という名前のディレクトリに隠した秘密" block
+
+scenario g6; mkdir -p '.secretlintignore'; echo "$LEAK" > '.secretlintignore/leak.env'
+echo harmless > also-changed.txt; commit_and_hook
+check ".secretlintignore という名前のディレクトリに隠した秘密" block
+
+scenario g7; mkdir -p 'node_modules/.bin'; echo "$LEAK" > 'node_modules/.bin/leak'
+echo harmless > also-changed.txt; commit_and_hook
+check "node_modules 配下 + 無害な変更の併用" block
+
+scenario g8; printf 'nothing\n' > .secretlintignore; commit_and_hook
+check ".secretlintignore の変更 (サポート外)" block
+
+scenario g9; echo "$LEAK" > .secretlintignore; echo harmless > also-changed.txt; commit_and_hook
+check ".secretlintignore 自体に隠した秘密" block
+
+# git の index に大文字小文字だけ違う 2 パスを入れる (macOS の作業ツリーでは作れない)
+scenario g10
+blob_leak=$(printf '%s\n' "$LEAK" | git hash-object -w --stdin)
+blob_ok=$(printf 'harmless\n' | git hash-object -w --stdin)
+git update-index --add --cacheinfo "100644,$blob_leak,Leak.env"
+git update-index --add --cacheinfo "100644,$blob_ok,leak.env"
+git commit -qm change; hook "$(git rev-parse HEAD)" "$BASE"
+check "大文字小文字だけ違う 2 パス (一時領域で衝突)" block
+
+scenario g11; echo ok > b.txt
+printf '{"rules":[{"id":"@secretlint/secretlint-rule-preset-recommend"}]}\0' > .secretlintrc.json
+git add -A; git commit -qm change; hook "$(git rev-parse HEAD)" "$BASE"
+check "NUL を含む .secretlintrc.json" block
 
 echo "--- 設定だけの push でも JSON を検証すること ---"
 scenario v1; printf '%s\n' '{"rules":[{"id":"@secretlint/secretlint-rule-preset-recommend"} broken' > .secretlintrc.json; commit_and_hook
