@@ -19,15 +19,36 @@ empty_tree=$(git hash-object -t tree /dev/null)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
+# secretlint の glob は dotfile にも一致するため、設定ファイルを検査対象と同じ
+# ディレクトリに置くと設定自体が検査されてしまう。検査対象は $scan 配下に隔離する。
+scan="$tmp/scan"
+mkdir -p "$scan"
+
+# 検査対象に複製された .secretlintignore を拾わせないための空ファイル
+ignore="$tmp/secretlintignore.empty"
+: > "$ignore"
+
 found=0
+push_oid=""
 
 # --- push 対象の抽出 -----------------------------------------------------
 while read -r local_ref local_oid remote_ref remote_oid; do
   [ "$local_oid" = "$zero" ] && continue          # ブランチ削除
 
+  # 複数 ref を同時に push すると、どの ref の .secretlintrc.* を適用するかが
+  # 一意に決まらない。片方の緩い設定をもう片方にも適用してしまう事故を避けるため、
+  # まとめて検査せず中止する。ref ごとに push すればよい。
+  if [ -n "$push_oid" ]; then
+    echo "pre-push: 複数の ref を同時に push する場合は検査できません。ref ごとに push してください。" >&2
+    exit 1
+  fi
+  push_oid="$local_oid"
+
   if [ "$remote_oid" = "$zero" ]; then
     # 新規ブランチ: 既に他のリモート追跡ブランチにあるコミットは除外する
-    oldest=$(git rev-list "$local_oid" --not --remotes="$remote_name" 2>/dev/null | tail -1 || true)
+    # rev-list の失敗を || true で潰すと検査対象ゼロと区別できず素通りするため、
+    # エラーはそのまま set -e に拾わせる (結果が空なのは正常終了)
+    oldest=$(git rev-list "$local_oid" --not --remotes="$remote_name" | tail -1)
     [ -z "$oldest" ] && continue
     if git rev-parse -q --verify "${oldest}^" >/dev/null 2>&1; then
       base="${oldest}^"
@@ -38,22 +59,98 @@ while read -r local_ref local_oid remote_ref remote_oid; do
     base="$remote_oid"
   fi
 
-  # 複数 ref を同時に push した際にパスが衝突しないよう ref ごとに分ける
-  slug=$(printf '%s' "${local_ref#refs/heads/}" | tr '/' '_')
-  dest="$tmp/$slug"
+  # プロセス置換の中の git diff が失敗しても while は正常終了してしまい、
+  # 検査対象ゼロとして素通りする。一度ファイルに落として失敗を検出する。
+  changed="$tmp/changed"
+  # T (type change) を含める: symlink から秘密入りの通常ファイルへの変更は
+  # type change として扱われ、ACMR だけでは抽出されない
+  git diff --name-only --diff-filter=ACMRT -z "$base" "$local_oid" > "$changed"
 
   # NUL 区切りで受けてスペースや改行を含むパスに対応する
   while IFS= read -r -d '' f; do
-    mkdir -p "$dest/$(dirname "$f")"
+    # secretlint 自身の設定・除外ファイルは組み込み ignore 対象なので、複製しても
+    # 検査対象にならない。これらだけを変更した push が「対象ファイルなし」の
+    # エラーになるのを避ける。
+    # `.secretlintrc.*` で一括除外すると .secretlintrc.backup のような設定ではない
+    # ファイルまで検査を逃れるため、実際に認識する名前だけを列挙する。
+    case "$f" in
+      .secretlintignore|\
+      .secretlintrc|\
+      .secretlintrc.json|.secretlintrc.yml|.secretlintrc.yaml|\
+      .secretlintrc.js|.secretlintrc.cjs|.secretlintrc.mjs) continue ;;
+    esac
+
+    # gitlink は tree の mode でしか判別できない。参照先のコミットオブジェクトは
+    # 親リポジトリに存在しないため cat-file では「取り出し失敗」と区別がつかない。
+    # --literal-pathspecs: `*.txt` のようなファイル名を glob として解釈されると
+    # 複数行が返り、正当なファイルで push が止まる。
+    tree_entry=$(git --literal-pathspecs ls-tree "$local_oid" -- "$f")
+    case "${tree_entry%% *}" in
+      100644|100755|120000) ;;
+      # submodule の中身は親リポジトリの push では送られないので検査対象外
+      160000) continue ;;
+      *)
+        echo "pre-push: $f を blob として取り出せないため push を中止します。" >&2
+        exit 1
+        ;;
+    esac
+    mkdir -p "$scan/$(dirname "$f")"
     # 作業ツリーではなく「push される版」の内容を取り出す
-    if git show "$local_oid:$f" > "$dest/$f" 2>/dev/null; then
-      found=1
-    else
-      rm -f "$dest/$f"
-    fi
-  done < <(git diff --name-only --diff-filter=ACMR -z "$base" "$local_oid")
+    git cat-file blob "$local_oid:$f" > "$scan/$f"
+    found=1
+  done < "$changed"
 done
 
+if [ -z "$push_oid" ]; then
+  echo "pre-push: 検査対象のファイルがないためスキップします。" >&2
+  exit 0
+fi
+
+# --- リポジトリ固有の設定の引き継ぎ ----------------------------------------
+# 検査対象は作業ツリーではなく複製なので、リポジトリ直下の .secretlintrc.* は
+# 自動では拾われない。明示的に取り出して --secretlintrc で渡す。
+#
+# 作業ツリーからではなく push される版から取り出す: 未コミットの設定で検査を
+# 緩められるのを防ぐ。設定を効かせたければ設定もコミットして push する。
+#
+# .secretlintignore はサポートしない: 同じ push で全ファイルを除外すれば検査を
+# 回避できてしまう。上の抽出で複製対象から外しているが、カレントディレクトリの
+# 既定値として拾われる経路を塞ぐため、空ファイルを明示的に渡してもいる。
+# ファイル単位の除外は対象ファイル内の secretlint-disable コメントで表現する。
+#
+# .secretlintrc.js 系もサポートしない: グローバルフックで任意のリポジトリ由来の
+# JavaScript を実行することになる。存在する場合は黙って無視せずエラーにする。
+#
+# set -u 下で空配列を展開すると bash 3.2 (macOS 標準) が unbound variable で落ちるため
+# 展開時に ${arr[@]+...} で保護する
+rc_found=()
+for rc in .secretlintrc.json .secretlintrc.yml .secretlintrc.yaml .secretlintrc; do
+  git cat-file -e "$push_oid:$rc" 2>/dev/null && rc_found+=("$rc")
+done
+for rc in .secretlintrc.js .secretlintrc.cjs .secretlintrc.mjs; do
+  if git cat-file -e "$push_oid:$rc" 2>/dev/null; then
+    echo "pre-push: $rc はサポートしていません (JavaScript を実行しないため)。JSON か YAML に移してください。" >&2
+    exit 1
+  fi
+done
+
+# 採用されなかった設定を黙って無視すると、書いたはずのルールが効いていない状態に
+# 気づけない。曖昧な状態は解消させる。
+if [ "${#rc_found[@]}" -gt 1 ]; then
+  echo "pre-push: 設定ファイルが複数あります (${rc_found[*]})。1つに統合してください。" >&2
+  exit 1
+fi
+
+rc_args=()
+if [ "${#rc_found[@]}" -eq 1 ]; then
+  rc="${rc_found[0]}"
+  git show "$push_oid:$rc" > "$tmp/$rc"
+  rc_args=(--secretlintrc "$tmp/$rc")
+  echo "pre-push: $rc ($(git rev-parse --short "$push_oid") の版) を適用します。" >&2
+fi
+
+# 設定だけを変更した push はここに来る。検査対象ゼロで secretlint を呼ぶと
+# エラー終了するため、設定の検証だけ済ませて抜ける。
 if [ "$found" -eq 0 ]; then
   echo "pre-push: 検査対象のファイルがないためスキップします。" >&2
   exit 0
@@ -62,14 +159,20 @@ fi
 # --- 検査 ------------------------------------------------------------------
 # secretlint/secretlint イメージは preset-recommend 等をビルトインしており、
 # 設定ファイル無しで動く設計 (https://github.com/secretlint/secretlint)
+#
+# --no-gitignore は必須: secretlint v13 は既定で .gitignore を尊重するため、
+# 同じ push で秘密ファイルを .gitignore に足せば検査を回避できてしまう。
+# ここで検査するのは git が push すると判断した追跡対象なので、.gitignore の
+# 再適用は不要でもある。
 if ! docker run --rm \
   --mount type=bind,source="$tmp",target="$tmp" \
-  --workdir "$tmp" \
-  "$SECRETLINT_IMAGE" secretlint '**/*'; then
+  --workdir "$scan" \
+  "$SECRETLINT_IMAGE" secretlint --no-gitignore --secretlintignore "$ignore" \
+  ${rc_args[@]+"${rc_args[@]}"} '**/*'; then
   cat >&2 <<'EOF'
 
 pre-push: 秘密情報の可能性がある内容を検出したため push を中止しました。
-検出箇所の先頭はブランチ名のディレクトリです。実際のパスはその下の部分に対応します。
+検出箇所のパスは一時ディレクトリを基準にしています。リポジトリ内の相対パスに対応します。
 EOF
   exit 1
 fi
