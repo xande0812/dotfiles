@@ -168,10 +168,14 @@ git update-ref refs/remotes/origin/stale HEAD
 hook "$(git rev-parse HEAD)" "$Z"
 check "追跡 ref が tip を含む新規ブランチ" block
 
+# LC_ALL=C を明示する: 通常の locale では tr が Illegal byte sequence で落ちてしまい、
+# iconv による検証が効いているかを確かめられない
 scenario n2; echo ok > b.txt
 printf '{"rules":[{"id":"@secretlint/secretlint-rule-preset-recommend","x":"\xff"}]}\n' > .secretlintrc.json
-git add -A; git commit -qm change; hook "$(git rev-parse HEAD)" "$BASE"
-check "不正な UTF-8 を含む .secretlintrc.json" block
+git add -A; git commit -qm change
+OUT=$(printf 'refs/heads/main %s refs/heads/main %s\n' "$(git rev-parse HEAD)" "$BASE" \
+  | LC_ALL=C "$HOOK" origin url 2>&1); STATUS=$?
+check "不正な UTF-8 を含む .secretlintrc.json (LC_ALL=C)" block
 
 echo "--- 設定だけの push でも JSON を検証すること ---"
 scenario v1; printf '%s\n' '{"rules":[{"id":"@secretlint/secretlint-rule-preset-recommend"} broken' > .secretlintrc.json; commit_and_hook
