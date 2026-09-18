@@ -162,6 +162,17 @@ printf '{"rules":[{"id":"@secretlint/secretlint-rule-preset-recommend"}]}\0' > .
 git add -A; git commit -qm change; hook "$(git rev-parse HEAD)" "$BASE"
 check "NUL を含む .secretlintrc.json" block
 
+# 追跡 ref が古い/別リポジトリを指す状態で、新規ブランチの tip が未検査にならないこと
+scenario n1; echo "$LEAK" > leak.env; git add -A; git commit -qm secret
+git update-ref refs/remotes/origin/stale HEAD
+hook "$(git rev-parse HEAD)" "$Z"
+check "追跡 ref が tip を含む新規ブランチ" block
+
+scenario n2; echo ok > b.txt
+printf '{"rules":[{"id":"@secretlint/secretlint-rule-preset-recommend","x":"\xff"}]}\n' > .secretlintrc.json
+git add -A; git commit -qm change; hook "$(git rev-parse HEAD)" "$BASE"
+check "不正な UTF-8 を含む .secretlintrc.json" block
+
 echo "--- 設定だけの push でも JSON を検証すること ---"
 scenario v1; printf '%s\n' '{"rules":[{"id":"@secretlint/secretlint-rule-preset-recommend"} broken' > .secretlintrc.json; commit_and_hook
 check "設定だけの push で壊れた JSON" block
