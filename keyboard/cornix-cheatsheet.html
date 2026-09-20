@@ -1,0 +1,496 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cornix LP Keymap</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap">
+<style>
+  :root {
+    --paper: #e9ecf0;
+    --sheet: #ffffff;
+    --key: #ffffff;
+    --key-edge: #c8ced6;
+    --key-shade: #eef1f4;
+    --ink: #171a1f;
+    --ink-soft: #626b77;
+    --ink-faint: #5f6874;
+    --rule: #d6dbe1;
+    --mod: #0b6472;
+    --mod-bg: #e2f1f4;
+    --lay: #96500a;
+    --lay-bg: #f7ecdd;
+    --sys: #8e1b3b;
+    --sys-bg: #f8e6ea;
+    --key-h: 40px;
+    --gap: 4px;
+    --legend: 13px;
+    --sub: 8.5px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #101216;
+      --sheet: #181b21;
+      --key: #232830;
+      --key-edge: #39414d;
+      --key-shade: #1d2128;
+      --ink: #e5e9ef;
+      --ink-soft: #9aa4b1;
+      --ink-faint: #97a1ae;
+      --rule: #2d343d;
+      --mod: #6fd0e0;
+      --mod-bg: #16323a;
+      --lay: #edaa53;
+      --lay-bg: #3a2a15;
+      --sys: #f28ba6;
+      --sys-bg: #3b1a25;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #101216;
+    --sheet: #181b21;
+    --key: #232830;
+    --key-edge: #39414d;
+    --key-shade: #1d2128;
+    --ink: #e5e9ef;
+    --ink-soft: #9aa4b1;
+    --ink-faint: #97a1ae;
+    --rule: #2d343d;
+    --mod: #6fd0e0;
+    --mod-bg: #16323a;
+    --lay: #edaa53;
+    --lay-bg: #3a2a15;
+    --sys: #f28ba6;
+    --sys-bg: #3b1a25;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Archivo", "Helvetica Neue", system-ui, sans-serif;
+    padding-block: 24px;
+    padding-inline: 16px;
+  }
+  .sheet {
+    max-width: 960px;
+    margin: 0 auto;
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding-block: 22px;
+    padding-inline: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .masthead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    border-bottom: 2px solid var(--ink); padding-bottom: 8px; }
+  .masthead h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.015em; margin: 0; }
+  .masthead .src { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; color: var(--ink-soft); }
+
+  .roles { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 10px; color: var(--ink-soft);
+    font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .roles span { display: inline-flex; align-items: center; gap: 5px; }
+  .swatch { width: 9px; height: 9px; border-radius: 2px; border: 1px solid var(--key-edge); display: inline-block; }
+  .sw-mod { background: var(--mod-bg); border-color: var(--mod); }
+  .sw-lay { background: var(--lay-bg); border-color: var(--lay); }
+  .sw-sys { background: var(--sys-bg); border-color: var(--sys); }
+  .sw-trns { background: var(--key-shade); }
+  .sw-held { background: var(--ink); border-color: var(--ink); }
+
+  .layer { display: flex; flex-direction: column; gap: 7px; }
+  .layer-head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+  .badge { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; font-weight: 600;
+    background: var(--ink); color: var(--sheet); padding: 2px 6px; border-radius: 2px; letter-spacing: 0.04em; }
+  .layer-head h2 { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+  .layer-head .how { font-size: 11px; color: var(--ink-soft); margin-left: auto; text-align: right; }
+
+  .board-scroll { overflow-x: auto; }
+  .board { display: flex; gap: 14px; min-width: 620px; }
+  .half { flex: 1; display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--gap); }
+
+  .k {
+    height: var(--key-h);
+    border: 1px solid var(--key-edge);
+    border-radius: 3px;
+    background: var(--key);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--legend);
+    line-height: 1.05;
+    overflow: hidden;
+    padding-inline: 1px;
+  }
+  .k .sub { font-size: var(--sub); color: var(--ink-soft); letter-spacing: 0.02em; }
+  .k .main { font-weight: 500; }
+  .k.thumb { border-radius: 3px 3px 9px 9px; }
+  .k.mod { background: var(--mod-bg); border-color: var(--mod); }
+  .k.mod .sub { color: var(--mod); font-weight: 600; }
+  .k.lay { background: var(--lay-bg); border-color: var(--lay); }
+  .k.lay .sub { color: var(--lay); font-weight: 600; }
+  .k.sys { background: var(--sys-bg); border-color: var(--sys); color: var(--sys); }
+  .k.trns { background: var(--key-shade); border-style: dashed; border-color: var(--rule); color: var(--ink-faint); }
+  .k.trns .main { font-weight: 400; font-size: 10px; }
+  .k.held { background: var(--ink); border-color: var(--ink); color: var(--sheet); }
+  .k.held .sub { color: var(--sheet); opacity: 0.7; }
+
+  .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px;
+    border-top: 2px solid var(--ink); padding-top: 12px; }
+  .panel h3 { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10.5px; }
+  th, td { text-align: left; padding: 2.5px 5px 2.5px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { color: var(--ink-soft); font-weight: 500; }
+  td.k-col { color: var(--ink-soft); white-space: nowrap; }
+  ul { margin: 0; padding-left: 15px; font-size: 10.5px; line-height: 1.55; }
+  ul li { margin-bottom: 2px; }
+  code { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  @media print {
+    :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
+      --paper: #fff; --sheet: #fff; --key: #fff; --key-edge: #b9c0c9; --key-shade: #f2f4f6;
+      --ink: #14171c; --ink-soft: #5a636e; --ink-faint: #5f6874; --rule: #d2d7dd;
+      --mod: #0b6472; --mod-bg: #e4f2f5; --lay: #96500a; --lay-bg: #f8eede;
+      --sys: #8e1b3b; --sys-bg: #f9e8ec;
+      --key-h: 9mm; --gap: 1.1mm; --legend: 7.4pt; --sub: 5.4pt;
+    }
+    @page { size: A4 portrait; margin: 9mm; }
+    body { padding: 0; background: #fff; }
+    .sheet { max-width: none; border: 0; padding: 0; gap: 3.4mm; }
+    .board { min-width: 0; }
+    .board-scroll { overflow: visible; }
+    .masthead h1 { font-size: 13pt; }
+    .layer { gap: 1.6mm; }
+    .layer-head h2 { font-size: 9pt; }
+    .strip { gap: 5mm; grid-template-columns: repeat(3, 1fr); }
+    table, ul { font-size: 6.6pt; }
+  }
+</style>
+
+<div class="sheet">
+
+  <div class="masthead">
+    <h1>Cornix LP &mdash; Keymap</h1>
+    <div class="roles">
+      <span><i class="swatch sw-mod"></i>修飾 / HRM</span>
+      <span><i class="swatch sw-lay"></i>レイヤー</span>
+      <span><i class="swatch sw-sys"></i>システム</span>
+      <span><i class="swatch sw-trns"></i>▽ 透過</span>
+      <span><i class="swatch sw-held"></i>押しているキー</span>
+    </div>
+    <div class="src">keyboard/cornix.vil &middot; RMK + Vial</div>
+  </div>
+
+  <!-- ===== L0 BASE ===== -->
+  <section class="layer">
+    <div class="layer-head">
+      <span class="badge">L0</span><h2>BASE</h2>
+      <span class="how">既定レイヤー</span>
+    </div>
+    <div class="board-scroll"><div class="board">
+      <div class="half">
+        <div class="k"><span class="main">`</span></div>
+        <div class="k"><span class="main">Q</span></div>
+        <div class="k"><span class="main">W</span></div>
+        <div class="k"><span class="main">E</span></div>
+        <div class="k"><span class="main">R</span></div>
+        <div class="k"><span class="main">T</span></div>
+
+        <div class="k mod"><span class="sub">+英数</span><span class="main">Esc</span></div>
+        <div class="k mod"><span class="sub">⌃</span><span class="main">A</span></div>
+        <div class="k mod"><span class="sub">⌥</span><span class="main">S</span></div>
+        <div class="k mod"><span class="sub">⌘</span><span class="main">D</span></div>
+        <div class="k mod"><span class="sub">⇧</span><span class="main">F</span></div>
+        <div class="k"><span class="main">G</span></div>
+
+        <div class="k mod"><span class="main">⇧</span></div>
+        <div class="k"><span class="main">Z</span></div>
+        <div class="k"><span class="main">X</span></div>
+        <div class="k"><span class="main">C</span></div>
+        <div class="k"><span class="main">V</span></div>
+        <div class="k"><span class="main">B</span></div>
+
+        <div class="k lay"><span class="sub">hold</span><span class="main">FUN</span></div>
+        <div class="k mod"><span class="main">⌥</span></div>
+        <div class="k mod"><span class="main">⌘</span></div>
+        <div class="k lay thumb"><span class="sub">hold NAV</span><span class="main">英数</span></div>
+        <div class="k thumb"><span class="main">Tab</span></div>
+        <div class="k thumb"><span class="main">Space</span></div>
+      </div>
+      <div class="half">
+        <div class="k"><span class="main">Y</span></div>
+        <div class="k"><span class="main">U</span></div>
+        <div class="k"><span class="main">I</span></div>
+        <div class="k"><span class="main">O</span></div>
+        <div class="k"><span class="main">P</span></div>
+        <div class="k"><span class="main">-</span></div>
+
+        <div class="k"><span class="main">H</span></div>
+        <div class="k mod"><span class="sub">⇧</span><span class="main">J</span></div>
+        <div class="k mod"><span class="sub">⌘</span><span class="main">K</span></div>
+        <div class="k mod"><span class="sub">⌥</span><span class="main">L</span></div>
+        <div class="k mod"><span class="sub">⌃</span><span class="main">;</span></div>
+        <div class="k"><span class="main">'</span></div>
+
+        <div class="k"><span class="main">N</span></div>
+        <div class="k"><span class="main">M</span></div>
+        <div class="k"><span class="main">,</span></div>
+        <div class="k"><span class="main">.</span></div>
+        <div class="k"><span class="main">/</span></div>
+        <div class="k"><span class="main">=</span></div>
+
+        <div class="k thumb"><span class="main">Enter</span></div>
+        <div class="k thumb"><span class="main">BSpc</span></div>
+        <div class="k lay thumb"><span class="sub">hold SYM</span><span class="main">かな</span></div>
+        <div class="k"><span class="main">[</span></div>
+        <div class="k"><span class="main">]</span></div>
+        <div class="k"><span class="main">\</span></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ===== L1 NAV ===== -->
+  <section class="layer">
+    <div class="layer-head">
+      <span class="badge">L1</span><h2>NAV &middot; WM</h2>
+      <span class="how">左親指いちばん外（英数）を長押し</span>
+    </div>
+    <div class="board-scroll"><div class="board">
+      <div class="half">
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">⌃⌥K</span></div>
+        <div class="k"><span class="main">⌃⌥R</span></div>
+        <div class="k"><span class="main">⌃⌥T</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">⌃⌥H</span></div>
+        <div class="k"><span class="main">⌃⌥J</span></div>
+        <div class="k"><span class="main">⌃⌥L</span></div>
+        <div class="k"><span class="main">⌃B</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">⌃⌥Z</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">⌃⌥B</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k held thumb"><span class="sub">held</span><span class="main">NAV</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+      </div>
+      <div class="half">
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+
+        <div class="k"><span class="main">←</span></div>
+        <div class="k"><span class="main">↓</span></div>
+        <div class="k"><span class="main">↑</span></div>
+        <div class="k"><span class="main">→</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+
+        <div class="k"><span class="main">Home</span></div>
+        <div class="k"><span class="main">PgDn</span></div>
+        <div class="k"><span class="main">PgUp</span></div>
+        <div class="k"><span class="main">End</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k thumb"><span class="main">Del</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ===== L2 SYM/NUM ===== -->
+  <section class="layer">
+    <div class="layer-head">
+      <span class="badge">L2</span><h2>SYM &middot; NUM</h2>
+      <span class="how">右親指いちばん外（かな）を長押し</span>
+    </div>
+    <div class="board-scroll"><div class="board">
+      <div class="half">
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">-</span></div>
+        <div class="k"><span class="main">7</span></div>
+        <div class="k"><span class="main">8</span></div>
+        <div class="k"><span class="main">9</span></div>
+        <div class="k"><span class="main">=</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">/</span></div>
+        <div class="k"><span class="main">4</span></div>
+        <div class="k"><span class="main">5</span></div>
+        <div class="k"><span class="main">6</span></div>
+        <div class="k"><span class="main">*</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">0</span></div>
+        <div class="k"><span class="main">1</span></div>
+        <div class="k"><span class="main">2</span></div>
+        <div class="k"><span class="main">3</span></div>
+        <div class="k"><span class="main">.</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+      </div>
+      <div class="half">
+        <div class="k"><span class="main">^</span></div>
+        <div class="k"><span class="main">{</span></div>
+        <div class="k"><span class="main">}</span></div>
+        <div class="k"><span class="main">&amp;</span></div>
+        <div class="k"><span class="main">*</span></div>
+        <div class="k"><span class="main">_</span></div>
+
+        <div class="k"><span class="main">!</span></div>
+        <div class="k"><span class="main">(</span></div>
+        <div class="k"><span class="main">)</span></div>
+        <div class="k"><span class="main">$</span></div>
+        <div class="k"><span class="main">:</span></div>
+        <div class="k"><span class="main">"</span></div>
+
+        <div class="k"><span class="main">~</span></div>
+        <div class="k"><span class="main">#</span></div>
+        <div class="k"><span class="main">&lt;</span></div>
+        <div class="k"><span class="main">&gt;</span></div>
+        <div class="k"><span class="main">?</span></div>
+        <div class="k"><span class="main">+</span></div>
+
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k held thumb"><span class="sub">held</span><span class="main">SYM</span></div>
+        <div class="k"><span class="main">@</span></div>
+        <div class="k"><span class="main">%</span></div>
+        <div class="k"><span class="main">|</span></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ===== L3 FUN ===== -->
+  <section class="layer">
+    <div class="layer-head">
+      <span class="badge">L3</span><h2>FUN &middot; MEDIA &middot; BT</h2>
+      <span class="how">左下段いちばん外を長押し</span>
+    </div>
+    <div class="board-scroll"><div class="board">
+      <div class="half">
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">F1</span></div>
+        <div class="k"><span class="main">F2</span></div>
+        <div class="k"><span class="main">F3</span></div>
+        <div class="k"><span class="main">F4</span></div>
+        <div class="k"><span class="main">F5</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">F11</span></div>
+        <div class="k"><span class="main">F12</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+
+        <div class="k held"><span class="sub">held</span><span class="main">FUN</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k sys"><span class="sub">out</span><span class="main">USB/BT</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+        <div class="k trns thumb"><span class="main">▽</span></div>
+      </div>
+      <div class="half">
+        <div class="k"><span class="main">F6</span></div>
+        <div class="k"><span class="main">F7</span></div>
+        <div class="k"><span class="main">F8</span></div>
+        <div class="k"><span class="main">F9</span></div>
+        <div class="k"><span class="main">F10</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+
+        <div class="k"><span class="main">⏮</span></div>
+        <div class="k"><span class="main">⏯</span></div>
+        <div class="k"><span class="main">⏭</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+
+        <div class="k sys thumb"><span class="main">BT0</span></div>
+        <div class="k sys thumb"><span class="main">BT1</span></div>
+        <div class="k sys thumb"><span class="main">BT2</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k trns"><span class="main">▽</span></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ===== reference strip ===== -->
+  <div class="strip">
+    <div class="panel">
+      <h3>ノブ</h3>
+      <table>
+        <tr><th></th><th>左ノブ</th><th>右ノブ</th></tr>
+        <tr><td class="k-col">L0 回転</td><td>⌃⇧Tab / ⌃Tab</td><td>音量 − / +</td></tr>
+        <tr><td class="k-col">L0 押下</td><td>F13</td><td>F18</td></tr>
+        <tr><td class="k-col">L3 回転</td><td>音量 − / +</td><td>ホイール ↑ / ↓</td></tr>
+        <tr><td class="k-col">L3 押下</td><td>ミュート</td><td>中クリック</td></tr>
+      </table>
+      <ul style="margin-top:5px"><li>L1 / L2 は透過。L0 と同じ挙動。</li></ul>
+    </div>
+
+    <div class="panel">
+      <h3>コンボ</h3>
+      <table>
+        <tr><td class="k-col">` + '</td><td>}</td></tr>
+        <tr><td class="k-col">Q + W</td><td>Tab</td></tr>
+        <tr><td class="k-col">O + P</td><td>-</td></tr>
+      </table>
+      <h3 style="margin-top:8px">マクロ</h3>
+      <table>
+        <tr><td class="k-col">M0</td><td>Esc → 英数（左手 home 最外）</td></tr>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h3>タップ / ホールド設定</h3>
+      <ul>
+        <li>Permissive Hold: ON</li>
+        <li>Hold On Other Key Press: OFF</li>
+        <li>Flow Tap: OFF</li>
+        <li>Chordal Hold: ON（純正ファームでは no-op）</li>
+        <li>HRM は A S D F / J K L ; の8キー。最内列（G / H）と最外列には載せていない</li>
+        <li>L4–L9 は未使用。通常キーは KC_NO だが、ノブ（押下 = ミュート / 中クリック、回転 = 音量・ホイール）だけ既定値が残っている</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
