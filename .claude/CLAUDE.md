@@ -45,7 +45,7 @@ Why not を書く（[t_wada, 2017](https://x.com/t_wada/status/90491610615382835
 - 実装後は必ずCodexにレビューを依頼してください
   - Herdrを利用しているため、herdrで別ペインを立ち上げてCodexにレビューを依頼すること（詳細な手順はherdrスキルを参照）
     1. `herdr pane split --current --direction right --cwd "$PWD" --no-focus` でレビュー用ペインを作成（縦長ペインなら `--direction down`）
-    2. `herdr agent start reviewer --kind codex --pane <作成したpane-id> -- --model gpt-5.6-sol` でCodexを起動（モデルは必ずgpt-5.6-solを使うこと）
+    2. `herdr agent start reviewer --kind codex --pane <作成したpane-id> -- --model gpt-5.6-luna` でCodexを起動（モデルは必ずgpt-5.6-lunaを使うこと）
     3. `herdr agent prompt reviewer "<レビュー依頼文>" --wait --timeout 600000` でレビューを依頼し、`herdr agent read reviewer --source recent-unwrapped` で結果を読む
   - レビューの指摘は鵜呑みにせず、妥当性を自分で判断してください
   - レビューの指摘が妥当だと判断したら修正をしてください
