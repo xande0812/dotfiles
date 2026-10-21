@@ -79,7 +79,12 @@ brew list --formula ecsk &>/dev/null || {
 
 [tasks.screendrop]
 description = "Install Screendrop via Homebrew CLI"
-run = "brew list --cask screendrop &>/dev/null || brew install --cask fayazara/tap/screendrop"
+run = """
+brew list --cask screendrop &>/dev/null || {
+  brew trust --cask fayazara/tap/screendrop
+  brew install --cask fayazara/tap/screendrop
+}
+"""
 
 [tasks.git-wt]
 description = "Install git-wt via Homebrew CLI"
