@@ -31,3 +31,6 @@ esac
 
 # pi-coding-agent (xande0812/agent, ghq管理)
 export PATH="$(ghq root)/github.com/xande0812/agent/pi-coding-agent/bin:$PATH"
+
+# Hermes Agent command
+case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac
