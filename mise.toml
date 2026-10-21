@@ -16,7 +16,6 @@ dotfiles.default_mode = "symlink"
 "~/.config/pnpm" = {}
 "~/.config/ghostty" = {}
 "~/.config/herdr/config.toml" = {}
-"~/.aerospace.toml" = {}
 "~/.claude/CLAUDE.md" = {}
 "~/.claude/skills/japanese-tech-writing" = {}
 "~/.claude/skills/cognitive-rhythm-writing" = {}
@@ -27,7 +26,6 @@ dotfiles.default_mode = "symlink"
 "~/.local/bin/statusline-command.sh" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/aurora-tunnel" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/pgdump-bastion" = { mode = "copy", mode_bits = "0755" }
-"~/.config/borders/bordersrc" = { mode = "copy", mode_bits = "0755" }
 "~/.config/task/taskrc" = {}
 "~/.config/textlint/package.json" = {}
 "~/.config/textlint/.textlintrc.json" = {}
@@ -61,25 +59,12 @@ dotfiles.default_mode = "symlink"
 description = "Install the global textlint toolchain into ~/.config/textlint"
 run = "pnpm --dir \"$HOME/.config/textlint\" install"
 
-[tasks.aerospace]
-description = "Install AeroSpace via Homebrew CLI"
-run = "brew list --cask aerospace &>/dev/null || brew install --cask nikitabobko/tap/aerospace"
-
 [tasks.sbx]
 description = "Install Docker Sandboxes via Homebrew CLI"
 run = """
 brew list --formula sbx &>/dev/null || {
   brew trust --formula docker/tap/sbx
   brew install docker/tap/sbx
-}
-"""
-
-[tasks.borders]
-description = "Install JankyBorders via Homebrew CLI"
-run = """
-brew list --formula borders &>/dev/null || {
-  brew trust --formula FelixKratz/formulae/borders
-  brew install FelixKratz/formulae/borders
 }
 """
 
@@ -107,7 +92,7 @@ brew list --formula git-wt &>/dev/null || {
 
 [tasks.brew-extras]
 description = "Install packages that require the Homebrew CLI"
-depends = ["aerospace", "sbx", "borders", "ecsk", "screendrop", "git-wt"]
+depends = ["sbx", "ecsk", "screendrop", "git-wt"]
 
 [tasks.macos-keyrepeat]
 description = "Set macOS key repeat rate"

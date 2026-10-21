@@ -71,7 +71,6 @@ bootstrap で自動化できないもの。上から順に。
 - [ ] 1Password: 設定 → 開発者 → SSH エージェントを使用 を有効化
 - [ ] GitHub 署名鍵を生成する（`mise run git-signing-key`）
 - [ ] 出力された公開鍵を https://github.com/settings/keys に **Signing key** として登録
-- [ ] AeroSpace にアクセシビリティ権限を付与（システム設定 → プライバシーとセキュリティ → アクセシビリティ）
 - [ ] Docker Sandboxes の初回起動と権限付与
 - [ ] Google 日本語入力を入力ソースに追加し、ライブ変換などを設定
 - [ ] ターミナルのフォントを Moralerspace に変更
@@ -83,7 +82,7 @@ bootstrap で自動化できないもの。上から順に。
 | 対象 | 管理方法 |
 |---|---|
 | GUI アプリ・フォント | `[bootstrap.packages]`（mise の brew-cask バックエンド） |
-| AeroSpace / Docker Sandboxes / JankyBorders / ecsk / Screendrop / git-wt | `[tasks]` から brew CLI 経由（タップが API メタデータ未公開のため） |
+| Docker Sandboxes / ecsk / Screendrop / git-wt | `[tasks]` から brew CLI 経由（タップが API メタデータ未公開のため） |
 | CLI ツール | `[tools]`（グローバルは `.config/mise/config.toml`） |
 | 設定ファイル | `[dotfiles]` |
 | タスク集約（Taskwarrior + task-sync） | `[dotfiles]` + `[tasks.task-sync-install]`。詳細は `task-sync.md` |

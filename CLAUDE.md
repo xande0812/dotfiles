@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   ——編集後は `mise bootstrap --only dotfiles` を実行して `~` に反映すること。
 - `[bootstrap.packages]` — mise の brew-cask バックエンド経由でインストールする GUI アプリ・フォント。
 - `[tasks]` — Homebrew tap が API メタデータを公開していないため `[bootstrap.packages]` に置けず、
-  `brew` CLI 経由で直接インストールするツール（AeroSpace、Docker Sandboxes/`sbx`）。
+  `brew` CLI 経由で直接インストールするツール（Docker Sandboxes/`sbx` など）。
 - `[tools]`（`.config/mise/config.toml`、グローバル mise 設定内） — CLI ツールのバージョン
   （bun、starship、lazygit、ghq、fzf、gh）。
 
@@ -36,7 +36,7 @@ mise trust                        # このリポジトリの mise.toml を信頼
 mise bootstrap --dry-run          # bootstrap の変更内容をプレビュー
 mise bootstrap                    # [dotfiles] + [bootstrap.packages] を適用
 mise bootstrap --only dotfiles    # [dotfiles] のみ再適用（copy モードのファイルを編集した後に必要）
-mise run brew-extras              # bootstrap でカバーされない [tasks] のインストール（aerospace、sbx）
+mise run brew-extras              # bootstrap でカバーされない [tasks] のインストール（sbx など）
 mise run git-signing-key          # commit 署名用の Secure Enclave 鍵を生成
 mise run textlint-global          # ~/.config/textlint にグローバル textlint を導入
 ```
