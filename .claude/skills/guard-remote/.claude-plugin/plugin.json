@@ -1,0 +1,5 @@
+{
+  "name": "guard-remote",
+  "description": "Block Bash commands that push with git or connect over ssh",
+  "version": "1.0.0"
+}

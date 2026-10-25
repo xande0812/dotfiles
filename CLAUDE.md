@@ -82,6 +82,14 @@ plugin（`~/.claude/skills/<name>/` に `.claude-plugin/plugin.json` を置く�
 拒否するのに対し、この preset は全バージョンが新しい。`.config/textlint/pnpm-workspace.yaml`
 でバージョン単位の例外を切っている。詳細はそのファイルのコメントを参照。
 
+### guard-remote（Claude の git push / ssh を止める）
+
+`.claude/skills/guard-remote/` は Claude Code の PreToolUse フック（textlint と同じ skills-directory
+plugin）。Bash コマンドを字句解析し、git push と ssh 系の接続（ssh/scp/sftp/sshfs/autossh/mosh、
+ssh 経由の rsync）を exit 2 で止める。`~/.claude/settings.json` の `permissions.deny` は前方一致なので
+`git -C dir push` やパイプ・`bash -c` の中を判定できず、その分をこのフックが受け持つ。変数展開
+（`cmd=git; $cmd push`）や source 先のスクリプトは追わない。
+
 ### task-sync
 
 Backlog と GitHub の自分宛てタスクを Taskwarrior（データは `~/vault/task/`）に集約する仕組み。
