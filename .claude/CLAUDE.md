@@ -25,6 +25,7 @@ Why not を書く（[t_wada, 2017](https://x.com/t_wada/status/90491610615382835
 
 ## 実装に関するルール
 
+- リポジトリのドキュメントと既存コードの内容が食い違う場合は、既存コードの慣習に従う。見つけた食い違いは、最終回答で1件ずつ指摘する
 - 外部ライブラリの利用やインストールは全てユーザーに任せること
   - 例:
     - claude codeをインストールする場合
@@ -44,9 +45,14 @@ Why not を書く（[t_wada, 2017](https://x.com/t_wada/status/90491610615382835
       - 正: `pnpm dlx <package>`
 - 実装後は必ずCodexにレビューを依頼してください
   - Herdrを利用しているため、herdrで別ペインを立ち上げてCodexにレビューを依頼すること（詳細な手順はherdrスキルを参照）
-    1. `herdr pane split --current --direction right --cwd "$PWD" --no-focus` でレビュー用ペインを作成（縦長ペインなら `--direction down`）
-    2. `herdr agent start reviewer --kind codex --pane <作成したpane-id> -- --model gpt-5.6-luna` でCodexを起動（モデルは必ずgpt-5.6-lunaを使うこと）
-    3. `herdr agent prompt reviewer "<レビュー依頼文>" --wait --timeout 600000` でレビューを依頼し、`herdr agent read reviewer --source recent-unwrapped` で結果を読む
+    1. `herdr pane split --current --direction right --cwd "$PWD" --no-focus` でレビュー用ペインを作成（縦長ペインなら `--direction down`）し、返ってきた `.result.pane.pane_id` を控える
+    2. `herdr agent start <reviewer名> --kind codex --pane <控えたpane-id> -- --model gpt-5.6-luna` でCodexを起動（モデルは必ずgpt-5.6-lunaを使うこと）
+       - `<reviewer名>` は `reviewer-$(openssl rand -hex 4)` で毎回作る。名前の重複で start が失敗したら作り直して再実行する
+    3. `herdr agent prompt <控えたpane-id> "<レビュー依頼文>" --wait --timeout 600000` でレビューを依頼し、`herdr agent read <控えたpane-id> --source recent-unwrapped` で結果を読む
+  - 同じ Herdr セッションで複数の Claude が並行して作業しているため、レビュー用ペインの取り違えを防ぐ
+    - 操作するのは自分が作成したペインだけにする。`herdr agent list` や `herdr pane list` で見つけた他のペインや reviewer は、名前が似ていても使わない
+    - 同じ会話で2回目以降のレビューをするときは、控えた pane-id のペインを使い回す。そのペインが見つからない、または Codex がいない場合は 1. からやり直す
+    - 固定名（`reviewer` など）は使わない。agent 名は live な agent の中で一意でなければならず、他の Claude と衝突する
   - レビューの指摘は鵜呑みにせず、妥当性を自分で判断してください
   - レビューの指摘が妥当だと判断したら修正をしてください
   - レビューの指摘の妥当性が判断できない場合はユーザーに聞いてください
