@@ -16,6 +16,7 @@ dotfiles.default_mode = "symlink"
 "~/.config/pnpm" = {}
 "~/.config/ghostty" = {}
 "~/.config/herdr/config.toml" = {}
+"~/.config/nvim" = {}
 "~/.claude/CLAUDE.md" = {}
 "~/.claude/skills/japanese-tech-writing" = {}
 "~/.claude/skills/cognitive-rhythm-writing" = {}
