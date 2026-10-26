@@ -89,13 +89,3 @@ plugin）。Bash コマンドを字句解析し、git push と ssh 系の接続�
 ssh 経由の rsync）を exit 2 で止める。`~/.claude/settings.json` の `permissions.deny` は前方一致なので
 `git -C dir push` やパイプ・`bash -c` の中を判定できず、その分をこのフックが受け持つ。変数展開
 （`cmd=git; $cmd push`）や source 先のスクリプトは追わない。
-
-### task-sync
-
-Backlog と GitHub の自分宛てタスクを Taskwarrior（データは `~/vault/task/`）に集約する仕組み。
-`.local/bin/task-sync`（bun/TypeScript、取り込み）、`.local/bin/task-alert`（zsh、期限通知）、
-`.config/task/taskrc`、`Library/LaunchAgents/dev.xande.task-sync.plist`（30 分ごと）で構成される。
-設計、Taskwarrior 上の属性の対応、既知の制約は `task-sync.md` に記載されている。
-スクリプトの `SourceTask`/`ImportRecord` 型がコントラクトで、UDA を増減するときは taskrc と両方を変えること。
-同期対象の Backlog スペース一覧は案件固有なのでリポジトリには置かず `~/vault/task/sync.json` に書く。
-
