@@ -172,7 +172,7 @@
   <div class="masthead">
     <h1>Cornix LP &mdash; Keymap</h1>
     <div class="roles">
-      <span><i class="swatch sw-mod"></i>修飾 / HRM</span>
+      <span><i class="swatch sw-mod"></i>修飾</span>
       <span><i class="swatch sw-lay"></i>レイヤー</span>
       <span><i class="swatch sw-sys"></i>システム</span>
       <span><i class="swatch sw-trns"></i>▽ 透過</span>
@@ -189,18 +189,18 @@
     </div>
     <div class="board-scroll"><div class="board">
       <div class="half">
-        <div class="k"><span class="main">`</span></div>
+        <div class="k"><span class="sub">+英数</span><span class="main">Esc</span></div>
         <div class="k"><span class="main">Q</span></div>
         <div class="k"><span class="main">W</span></div>
         <div class="k"><span class="main">E</span></div>
         <div class="k"><span class="main">R</span></div>
         <div class="k"><span class="main">T</span></div>
 
-        <div class="k mod"><span class="sub">+英数</span><span class="main">Esc</span></div>
-        <div class="k mod"><span class="sub">⌃</span><span class="main">A</span></div>
-        <div class="k mod"><span class="sub">⌥</span><span class="main">S</span></div>
-        <div class="k mod"><span class="sub">⌘</span><span class="main">D</span></div>
-        <div class="k mod"><span class="sub">⇧</span><span class="main">F</span></div>
+        <div class="k mod"><span class="main">⌃</span></div>
+        <div class="k"><span class="main">A</span></div>
+        <div class="k"><span class="main">S</span></div>
+        <div class="k"><span class="main">D</span></div>
+        <div class="k"><span class="main">F</span></div>
         <div class="k"><span class="main">G</span></div>
 
         <div class="k mod"><span class="main">⇧</span></div>
@@ -214,7 +214,7 @@
         <div class="k mod"><span class="main">⌥</span></div>
         <div class="k mod"><span class="main">⌘</span></div>
         <div class="k lay thumb"><span class="sub">hold NAV</span><span class="main">英数</span></div>
-        <div class="k thumb"><span class="main">Tab</span></div>
+        <div class="k mod thumb"><span class="main">⌘</span></div>
         <div class="k thumb"><span class="main">Space</span></div>
       </div>
       <div class="half">
@@ -226,10 +226,10 @@
         <div class="k"><span class="main">-</span></div>
 
         <div class="k"><span class="main">H</span></div>
-        <div class="k mod"><span class="sub">⇧</span><span class="main">J</span></div>
-        <div class="k mod"><span class="sub">⌘</span><span class="main">K</span></div>
-        <div class="k mod"><span class="sub">⌥</span><span class="main">L</span></div>
-        <div class="k mod"><span class="sub">⌃</span><span class="main">;</span></div>
+        <div class="k"><span class="main">J</span></div>
+        <div class="k"><span class="main">K</span></div>
+        <div class="k"><span class="main">L</span></div>
+        <div class="k"><span class="main">;</span></div>
         <div class="k"><span class="main">'</span></div>
 
         <div class="k"><span class="main">N</span></div>
@@ -237,7 +237,7 @@
         <div class="k"><span class="main">,</span></div>
         <div class="k"><span class="main">.</span></div>
         <div class="k"><span class="main">/</span></div>
-        <div class="k"><span class="main">=</span></div>
+        <div class="k mod"><span class="main">⇧</span></div>
 
         <div class="k thumb"><span class="main">Enter</span></div>
         <div class="k thumb"><span class="main">BSpc</span></div>
@@ -325,7 +325,7 @@
     </div>
     <div class="board-scroll"><div class="board">
       <div class="half">
-        <div class="k trns"><span class="main">▽</span></div>
+        <div class="k"><span class="main">`</span></div>
         <div class="k"><span class="main">-</span></div>
         <div class="k"><span class="main">7</span></div>
         <div class="k"><span class="main">8</span></div>
@@ -607,13 +607,12 @@
     <div class="panel">
       <h3>コンボ</h3>
       <table>
-        <tr><td class="k-col">` + '</td><td>}</td></tr>
         <tr><td class="k-col">Q + W</td><td>Tab</td></tr>
         <tr><td class="k-col">O + P</td><td>-</td></tr>
       </table>
       <h3 style="margin-top:8px">マクロ</h3>
       <table>
-        <tr><td class="k-col">M0</td><td>Esc → 英数（左手 home 最外）</td></tr>
+        <tr><td class="k-col">M0</td><td>Esc → 英数（左手上段最外）</td></tr>
       </table>
     </div>
 
@@ -624,8 +623,8 @@
         <li>Hold On Other Key Press: OFF</li>
         <li>Flow Tap: OFF</li>
         <li>Chordal Hold: ON（純正ファームでは no-op）</li>
-        <li>HRM は A S D F / J K L ; の8キー。最内列（G / H）と最外列には載せていない</li>
-        <li>L4 GAME は左手が HRM なしの素のキー。右手はマウス前提</li>
+        <li>HRM は使わない。修飾は単独キー（左: ⌃ ⇧ ⌥ ⌘ と親指 ⌘、右: ⇧）。設定はレイヤーキー（英数 / かな）のタップ判定に効く</li>
+        <li>L4 GAME は右手マウス前提</li>
         <li>L4 の WASD 位置が矢印キーなのは、コンボ Q + W → Tab がレイヤーを問わず発火するため（Q と W の同時押しで誤爆する）</li>
         <li>L6–L9 は未使用。通常キーは KC_NO だが、ノブ（押下 = ミュート / 中クリック、回転 = 音量・ホイール）だけ既定値が残っている</li>
       </ul>
