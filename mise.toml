@@ -22,6 +22,9 @@ dotfiles.default_mode = "symlink"
 "~/.claude/skills/cognitive-rhythm-writing" = {}
 "~/.claude/skills/textlint-ai-words" = {}
 "~/.claude/skills/guard-remote" = {}
+"~/.claude/skills/session-log" = {}
+"~/.claude/skills/handoff" = {}
+"~/.claude/skills/pickup" = {}
 "~/.githooks" = {}
 "~/.local/bin/ssh-sign" = { mode = "copy", mode_bits = "0755" }
 "~/.local/bin/home-audit" = { mode = "copy", mode_bits = "0755" }

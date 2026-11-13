@@ -1,0 +1,5 @@
+{
+  "name": "session-log",
+  "description": "Record each Claude Code session's cwd, branch and title into the Obsidian vault",
+  "version": "1.0.0"
+}

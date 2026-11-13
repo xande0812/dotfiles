@@ -89,3 +89,18 @@ plugin）。Bash コマンドを字句解析し、git push と ssh 系の接続�
 ssh 経由の rsync）を exit 2 で止める。`~/.claude/settings.json` の `permissions.deny` は前方一致なので
 `git -C dir push` やパイプ・`bash -c` の中を判定できず、その分をこのフックが受け持つ。変数展開
 （`cmd=git; $cmd push`）や source 先のスクリプトは追わない。
+
+### 作業ノート（セッションを resume なしで再開する）
+
+Claude Code のセッションの情報を Obsidian vault（`~/vault/obsidian/claude/`）に集める。3つの部分からなる。
+
+- `.claude/skills/session-log/` — Stop フック（skills-directory plugin）。ターンが終わるたびに
+  `claude/sessions/<session_id>.md` を上書きし、cwd・ブランチ・タイトル・開始時刻を残す。
+  SessionEnd ではなく Stop を使うのは、ターミナルを閉じたときに SessionEnd が発火しないため。
+  割り込みや API エラーで終わったターンでは Stop が発火しないので、そのターンの分は記録されない。
+- `.claude/skills/handoff/` — `/handoff`。会話の文脈を持つ Claude 自身が `claude/work/` に作業単位の
+  ノートを書く。1つの作業ノートに複数のセッション ID が載る。
+- `.claude/skills/pickup/` — `/pickup`。作業ノートを選んで読み込み、再開する。
+
+一覧は vault 側の `claude/claude.base`（Obsidian Bases）で見る。この `.base` は vault のデータとして
+扱い、このリポジトリでは管理しない。
