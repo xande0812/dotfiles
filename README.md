@@ -63,7 +63,6 @@ bootstrap で自動化できないもの。上から順に。
 - [ ] Docker Sandboxes の初回起動と権限付与
 - [ ] Google 日本語入力を入力ソースに追加し、ライブ変換などを設定
 - [ ] ターミナルのフォントを Moralerspace に変更
-- [ ] Raycast の初期設定とホットキー割り当て
 
 ## 構成
 
