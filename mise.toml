@@ -17,6 +17,7 @@ dotfiles.default_mode = "symlink"
 "~/.config/ghostty" = {}
 "~/.config/herdr/config.toml" = {}
 "~/.config/nvim" = {}
+"~/.config/karabiner/assets/complex_modifications/cornix.json" = {}
 "~/.claude/CLAUDE.md" = {}
 "~/.claude/skills/japanese-tech-writing" = {}
 "~/.claude/skills/cognitive-rhythm-writing" = {}
@@ -53,6 +54,7 @@ dotfiles.default_mode = "symlink"
 "brew-cask:font-moralerspace" = "latest"
 "brew-cask:ghostty" = "latest"
 "brew-cask:obsidian" = "latest"
+"brew-cask:karabiner-elements" = "latest"
 
 [tasks.textlint-global]
 description = "Install the global textlint toolchain into ~/.config/textlint"
